@@ -15,3 +15,10 @@
 ## Stack
 
 - Here is where you define the stack memory for the emulator, growing up as needed.
+
+---------------------------
+
+
+### Main layout
+
+- take input from file or stdin. save it to linst of strings labeled "lines". (delimiting on newline)
