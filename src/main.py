@@ -60,9 +60,11 @@ with open(sys.argv[1], "r") as f:
 
 lines = [l.split(';')[0] for l in lines if l.split(';')[0].strip()]
 dataSection = True
-for l in lines:
+labels = {}
+for i,l in enumerate(lines):
     line = l.split()
     if (label := re.search("^[a-zA-Z0-9][a-zA-Z0-9_]*", line[0])) and line[0] not in instructions.__members__:
+        labels[label] = i+1
         first = line[1]
         if len(line) > 2:
             second = line[2]
@@ -86,12 +88,20 @@ for l in lines:
             case "BYT":
                 if second:
                     if second[0] != "'" and not re.search("'.'", second):
-                        input('Invalid syntax in "' + l + '"  BYT data second operand must have number/character or be blank. examples: ".BYT #12", ".BYT \'a\'", ".BYT" \nPress enter to exit.')
-                    if second[0] == '#' and not second[1:].lstrip('-').isdigit():
-                        input('Invalid syntax in "' + l + '"  BYT data second operand must have number/character or be blank. examples: ".BYT #12", ".BYT \'a\'", ".BYT" \nPress enter to exit.')
-                    if 
+                        input('Invalid syntax in "' + l + '"  BYT data characters must be a single character in single quotes. example: ".BYT \'a\'"\nPress enter to exit.')
+                    elif second[0] == '#' and not second[1:].lstrip('-').isdigit():
+                        input('Invalid syntax in "' + l + '"  BYT data numbers must have a pound and number as second operand.  example: ".BYT #12"\nPress enter to exit.')
+                    else: 
+                        input('Invalid syntax in "' + l + '"  BYT data must be character, number, or blank. examples: ".BYT \'a\'", ".BYT #12", ".BYT"\nPress enter to exit.')
             case "BTS":
-                pass
+                if not second or second[0] != '#' or not second[1:].lstrip('-').isdigit():
+                    input('Invalid syntax in "' + l + '"  BTS data must have pound then number as second operand. example: ".BTS #12"\nPress enter to exit.')
             case "STR":
-                pass
-    
+                if not second:
+                    input('Invalid syntax in "' + l + '"  STR data must have string or string length as second operand. examples: ".STR \'hello\'", ".STR #12"\nPress enter to exit.')
+                elif second[0] == '#' and not second[1:].lstrip('-').isdigit():
+                    input('Invalid syntax in "' + l + '"  STR data numbers must have a pound and number as second operand.  example: ".STR #12"\nPress enter to exit.')
+                elif second[0] != '"' and not re.search("\"[a-zA-Z0-9!@#$%^&*)\-+_=?<>\{\}\[\]\\,.\/:;( `~]*\"", second):
+                    input('Invalid syntax in "' + l + '"  STR data must be string in double quotes. examples: ".STR "hello""\nPress enter to exit.')
+                else:
+                    input('Invalid syntax in "' + l + '"  STR data operand must be string or string length. examples: ".STR "hello"", ".STR #12"\nPress enter to exit.')
