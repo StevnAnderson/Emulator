@@ -24,8 +24,12 @@
 ### Main layout
  
 - take input from file or stdin. save it to list of strings labeled "lines". (delimiting on newline)
+- comprehention to get rid of empty lines and comments.
 - create a variable (dataSection) that represents when the data section is finished.
-- enter a for loop over lines (splitting on semicolons and grabbing first part) that matches all viable words:
+- create a dictionary (labels) to store labels and line numbers
+- enter a for loop over lines:
   - each directive will check if dataSection, else throw error. Then verify syntax.
-  - Each instruction will set dataSection to false, then verify syntax.
-  - do nothing if blank
+  - Each instruction will set dataSection to false.
+  - Each label will be stored in labels
+- enter second for loop over lines
+  - each instruction will check syntax and check each label used exists

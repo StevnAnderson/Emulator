@@ -1,6 +1,10 @@
 import sys
 from enum import Enum
 import re
+try:
+    import src.registers as regs
+except:
+    import registers as regs
 
 class directives(Enum):
     INT = 1
@@ -49,8 +53,11 @@ class instructions(Enum):
     CALL = 44
     RET = 45
 
-
-
+def toCode(line):
+    if firstInstruction == -1:
+        firstInstruction = line
+    
+registers = regs.registers
 if len(sys.argv) < 2:
     input("Please specify a file to run next time...\nPress enter to exit.")
     sys.exit(1)
@@ -59,26 +66,36 @@ with open(sys.argv[1], "r") as f:
     lines = f.readlines()
 
 lines = [l.split(';')[0] for l in lines if l.split(';')[0].strip()]
-dataSection = True
 labels = {}
+firstInstruction = -1
 for i,l in enumerate(lines):
     line = l.split()
     if (label := re.search("^[a-zA-Z0-9][a-zA-Z0-9_]*", line[0])) and line[0] not in instructions.__members__:
+        if len(line) < 2:
+            input('Invalid syntax in "' + l + '"  label must have operand.\nPress enter to exit.')
         labels[label] = i+1
-        first = line[1]
+        first = line[1].upper()
         if len(line) > 2:
-            second = line[2]
+            second = line[2].upper()
         else:
             second = None
-    else:
-        first = line[0]
-        if len(line) > 1:
-            second = line[1]
+        if len(line)>4:
+            third = line[3].upper()
         else:
-            second = None        
+            third = None
+    else:
+        first = line[0].upper()
+        if len(line) > 1:
+            second = line[1].upper()
+        else:
+            second = None
+        if len(line)>2:
+            third = line[2].upper()
+        else:
+            third = None
 # Directive 
     if first[0] == '.' and first[1:] in directives.__members__:
-        if not dataSection:
+        if firstInstruction!=-1:
             input('"' + l + '" not in data section...\nPress enter to exit.')
             sys.exit(1)
         match first[1:]:
@@ -103,5 +120,22 @@ for i,l in enumerate(lines):
                     input('Invalid syntax in "' + l + '"  STR data numbers must have a pound and number as second operand.  example: ".STR #12"\nPress enter to exit.')
                 elif second[0] != '"' and not re.search("\"[a-zA-Z0-9!@#$%^&*)\-+_=?<>\{\}\[\]\\,.\/:;( `~]*\"", second):
                     input('Invalid syntax in "' + l + '"  STR data must be string in double quotes. examples: ".STR "hello""\nPress enter to exit.')
-                else:
+                elif second[0] != '#' and not second[0] != '"':
                     input('Invalid syntax in "' + l + '"  STR data operand must be string or string length. examples: ".STR "hello"", ".STR #12"\nPress enter to exit.')
+    if first in instructions.__members__:
+        toCode(i+1)
+# Instruction
+for l in lines:
+    if first in instructions.__members__:
+        match first:
+            case "JMP":
+                if not second or second not in labels:
+                    input('Invalid syntax in "' + l + '"  JMP instruction must have a valid label as second operand.\nPress enter to exit.')
+            case "JMR":
+                if not second or second not in registers:
+                    input('Invalid syntax in "' + l + '"  JMR instruction must have a valid register as second operand.\nPress enter to exit.')
+            case "BNZ":
+                if not second or second not in registers:
+                    input('Invalid syntax in "' + l + '"  BNZ instruction must have a valid register as second operand.\nPress enter to exit.')
+                if not third or third not in labels:  
+                    input('Invalid syntax in "' + l + '"  BNZ instruction must have a valid label as third operand.\nPress enter to exit.')              
