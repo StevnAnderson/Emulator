@@ -6,6 +6,10 @@ try:
 except:
     import registers as regs
 
+r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, r15, pc, sl, sb, sp, fp, hp = regs.registers.values()
+registers = [r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, r15, pc, sl, sb, sp, fp, hp]
+firstInstruction = [-1]
+
 class directives(Enum):
     INT = 1
     BYT = 2
@@ -54,10 +58,15 @@ class instructions(Enum):
     RET = 45
 
 def toCode(line):
-    if firstInstruction == -1:
-        firstInstruction = line
+
+    if firstInstruction[0] == -1:
+        firstInstruction[0] = line
     
-registers = regs.registers
+def labelIsInstruction(label):
+    if labels[label] < firstInstruction:
+        input('Invalid syntax in "' + l + '"  cannot jump to directives.\nPress enter to exit.')
+        sys.exit(1)
+
 if len(sys.argv) < 2:
     input("Please specify a file to run next time...\nPress enter to exit.")
     sys.exit(1)
@@ -67,13 +76,16 @@ with open(sys.argv[1], "r") as f:
 
 lines = [l.split(';')[0] for l in lines if l.split(';')[0].strip()]
 labels = {}
-firstInstruction = -1
 for i,l in enumerate(lines):
     line = l.split()
     if (label := re.search("^[a-zA-Z0-9][a-zA-Z0-9_]*", line[0])) and line[0] not in instructions.__members__:
         if len(line) < 2:
             input('Invalid syntax in "' + l + '"  label must have operand.\nPress enter to exit.')
-        labels[label] = i+1
+            sys.exit(1)
+        if label[0] in labels:
+            input('Invalid syntax in "' + l + '"  label "' + label[0] + '" already used.\nPress enter to exit.')
+            sys.exit(1)
+        labels[label[0]] = i+1
         first = line[1].upper()
         if len(line) > 2:
             second = line[2].upper()
@@ -95,35 +107,47 @@ for i,l in enumerate(lines):
             third = None
 # Directive 
     if first[0] == '.' and first[1:] in directives.__members__:
-        if firstInstruction!=-1:
+        if firstInstruction[0]!=-1:
             input('"' + l + '" not in data section...\nPress enter to exit.')
             sys.exit(1)
         match first[1:]:
             case "INT":
                 if not second or second[0] != '#' or not second[1:].lstrip('-').isdigit():
                     input('Invalid syntax in "' + l + '"  INT data must have pound then number as second operand.example: ".INT #-12" \nPress enter to exit.')
+                    sys.exit(1)
             case "BYT":
                 if second:
                     if second[0] != "'" and not re.search("'.'", second):
                         input('Invalid syntax in "' + l + '"  BYT data characters must be a single character in single quotes. example: ".BYT \'a\'"\nPress enter to exit.')
+                        sys.exit(1)
                     elif second[0] == '#' and not second[1:].lstrip('-').isdigit():
                         input('Invalid syntax in "' + l + '"  BYT data numbers must have a pound and number as second operand.  example: ".BYT #12"\nPress enter to exit.')
+                        sys.exit(1)
                     else: 
                         input('Invalid syntax in "' + l + '"  BYT data must be character, number, or blank. examples: ".BYT \'a\'", ".BYT #12", ".BYT"\nPress enter to exit.')
+                        sys.exit(1)
             case "BTS":
                 if not second or second[0] != '#' or not second[1:].lstrip('-').isdigit():
                     input('Invalid syntax in "' + l + '"  BTS data must have pound then number as second operand. example: ".BTS #12"\nPress enter to exit.')
+                    sys.exit(1)
             case "STR":
                 if not second:
                     input('Invalid syntax in "' + l + '"  STR data must have string or string length as second operand. examples: ".STR \'hello\'", ".STR #12"\nPress enter to exit.')
+                    sys.exit(1)
                 elif second[0] == '#' and not second[1:].lstrip('-').isdigit():
                     input('Invalid syntax in "' + l + '"  STR data numbers must have a pound and number as second operand.  example: ".STR #12"\nPress enter to exit.')
-                elif second[0] != '"' and not re.search("\"[a-zA-Z0-9!@#$%^&*)\-+_=?<>\{\}\[\]\\,.\/:;( `~]*\"", second):
+                    sys.exit(1)
+                elif second[0] != '"' and not re.search("\"[a-zA-Z0-9!@#$%^&*)-+_=?<>}{[]\\,./:;( `~]*\"", second):
                     input('Invalid syntax in "' + l + '"  STR data must be string in double quotes. examples: ".STR "hello""\nPress enter to exit.')
+                    sys.exit(1)
                 elif second[0] != '#' and not second[0] != '"':
                     input('Invalid syntax in "' + l + '"  STR data operand must be string or string length. examples: ".STR "hello"", ".STR #12"\nPress enter to exit.')
+                    sys.exit(1)
     if first in instructions.__members__:
         toCode(i+1)
+if 'MAIN' not in labels:
+    input('Invalid syntax in "' + l + '"  MAIN instruction missing.\nPress enter to exit.')
+    sys.exit(1)
 # Instruction
 for l in lines:
     if first in instructions.__members__:
@@ -131,11 +155,17 @@ for l in lines:
             case "JMP":
                 if not second or second not in labels:
                     input('Invalid syntax in "' + l + '"  JMP instruction must have a valid label as second operand.\nPress enter to exit.')
+                    sys.exit(1)
+                labelIsInstruction(second)
             case "JMR":
                 if not second or second not in registers:
                     input('Invalid syntax in "' + l + '"  JMR instruction must have a valid register as second operand.\nPress enter to exit.')
+                    sys.exit(1)
             case "BNZ":
                 if not second or second not in registers:
                     input('Invalid syntax in "' + l + '"  BNZ instruction must have a valid register as second operand.\nPress enter to exit.')
+                    sys.exit(1)
                 if not third or third not in labels:  
                     input('Invalid syntax in "' + l + '"  BNZ instruction must have a valid label as third operand.\nPress enter to exit.')              
+                    sys.exit(1)
+                labelIsInstruction(third)
