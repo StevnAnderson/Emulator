@@ -62,19 +62,34 @@ lines = [l.split(';')[0] for l in lines if l.split(';')[0].strip()]
 dataSection = True
 for l in lines:
     line = l.split()
-    first = 1 if re.search("^[a-zA-Z0-9][a-zA-Z0-9_]*", line[0]) else 0
+    if (label := re.search("^[a-zA-Z0-9][a-zA-Z0-9_]*", line[0])) and line[0] not in instructions.__members__:
+        first = line[1]
+        if len(line) > 2:
+            second = line[2]
+        else:
+            second = None
+    else:
+        first = line[0]
+        if len(line) > 1:
+            second = line[1]
+        else:
+            second = None        
 # Directive 
-    if line[first][0] == '.' and line[first][1:] in directives.__members__:
+    if first[0] == '.' and first[1:] in directives.__members__:
         if not dataSection:
             input('"' + l + '" not in data section...\nPress enter to exit.')
             sys.exit(1)
-        match line[first][1:]:
+        match first[1:]:
             case "INT":
-                if len(line) > line.index("INT") + 1:
-                    if line[first+1][0] != '#' or not line[first+1][1:].lstrip('-').isdigit():
-                        input('Invalid syntax in "' + l + '" example: ".INT #-12" \nPress enter to exit.')
+                if not second or second[0] != '#' or not second[1:].lstrip('-').isdigit():
+                    input('Invalid syntax in "' + l + '"  INT data must have pound then number as second operand.example: ".INT #-12" \nPress enter to exit.')
             case "BYT":
-                pass
+                if second:
+                    if second[0] != "'" and not re.search("'.'", second):
+                        input('Invalid syntax in "' + l + '"  BYT data second operand must have number/character or be blank. examples: ".BYT #12", ".BYT \'a\'", ".BYT" \nPress enter to exit.')
+                    if second[0] == '#' and not second[1:].lstrip('-').isdigit():
+                        input('Invalid syntax in "' + l + '"  BYT data second operand must have number/character or be blank. examples: ".BYT #12", ".BYT \'a\'", ".BYT" \nPress enter to exit.')
+                    if 
             case "BTS":
                 pass
             case "STR":
