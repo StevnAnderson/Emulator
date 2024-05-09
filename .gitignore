@@ -160,3 +160,5 @@ cython_debug/
 #.idea/
 "design/UVU 4380 Instruction Set Architecture Fall 2023 1.pdf"
 "design/UVU 4380 Instruction Set Architecture Fall 2023 1.pdf"
+.vscode/
+test.asm
