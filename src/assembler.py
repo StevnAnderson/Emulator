@@ -9,6 +9,8 @@ except:
 r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, r15, pc, sl, sb, sp, fp, hp = regs.registers.values()
 registers = [r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, r15, pc, sl, sb, sp, fp, hp]
 firstInstruction = [-1]
+stackSize = 500
+memory = []
 
 class directives(Enum):
     INT = 1
@@ -62,10 +64,31 @@ def toCode(line):
     if firstInstruction[0] == -1:
         firstInstruction[0] = line
     
-def labelIsInstruction(label):
+def labelIsInstruction(l, label):
     if labels[label] < firstInstruction:
-        input('Invalid syntax in "' + l + '"  cannot jump to directives.\nPress enter to exit.')
+        input('Invalid syntax in "' + l + '" ' + label +' cannot jump to directives.\nPress enter to exit.')
         sys.exit(1)
+
+def labelIsDirective(l, label):
+    if labels[label] >= firstInstruction:
+        input('Invalid syntax in "' + l + '" ' + label +' cannot jump to instructions.\nPress enter to exit.')
+        sys.exit(1)
+
+def isRegister(l, name):
+    if not name or name not in registers:
+        input('Invalid syntax in "' + l + '" ' + name +' instruction must have a valid register as second operand.\nPress enter to exit.')
+        sys.exit(1)
+
+def isLabel(l, name):
+    if not name or name not in labels:
+        input('Invalid syntax in "' + l + '" ' + name +' instruction must have a valid label as second operand.\nPress enter to exit.')
+        sys.exit(1)
+
+def isInteger(l, name):
+    if not name or name[0] != '#' or not name[1:].lstrip('-').isdigit():
+        input('Invalid syntax in "' + l + '" ' + name +' INT data must have pound then number as second operand.example: ".INT #-12" \nPress enter to exit.')
+        sys.exit(1)
+
 
 if len(sys.argv) < 2:
     input("Please specify a file to run next time...\nPress enter to exit.")
@@ -76,6 +99,7 @@ with open(sys.argv[1], "r") as f:
 
 lines = [l.split(';')[0] for l in lines if l.split(';')[0].strip()]
 labels = {}
+# Directives and label dictionary
 for i,l in enumerate(lines):
     line = l.split()
     if (label := re.search("^[a-zA-Z0-9][a-zA-Z0-9_]*", line[0])) and line[0] not in instructions.__members__:
@@ -112,9 +136,7 @@ for i,l in enumerate(lines):
             sys.exit(1)
         match first[1:]:
             case "INT":
-                if not second or second[0] != '#' or not second[1:].lstrip('-').isdigit():
-                    input('Invalid syntax in "' + l + '"  INT data must have pound then number as second operand.example: ".INT #-12" \nPress enter to exit.')
-                    sys.exit(1)
+                isInteger(l, second)
             case "BYT":
                 if second:
                     if second[0] != "'" and not re.search("'.'", second):
@@ -153,19 +175,25 @@ for l in lines:
     if first in instructions.__members__:
         match first:
             case "JMP":
-                if not second or second not in labels:
-                    input('Invalid syntax in "' + l + '"  JMP instruction must have a valid label as second operand.\nPress enter to exit.')
-                    sys.exit(1)
+                isLabel(l, second)
                 labelIsInstruction(second)
-            case "JMR":
-                if not second or second not in registers:
-                    input('Invalid syntax in "' + l + '"  JMR instruction must have a valid register as second operand.\nPress enter to exit.')
-                    sys.exit(1)
-            case "BNZ":
-                if not second or second not in registers:
-                    input('Invalid syntax in "' + l + '"  BNZ instruction must have a valid register as second operand.\nPress enter to exit.')
-                    sys.exit(1)
-                if not third or third not in labels:  
-                    input('Invalid syntax in "' + l + '"  BNZ instruction must have a valid label as third operand.\nPress enter to exit.')              
-                    sys.exit(1)
+            case "JMR" | 'PSHR' | 'PSHB' | 'POPR' | 'POPB':                                              # register
+                isRegister(l,second)
+            case "BNZ" | "BGT" | "BLT" | "BRZ" | "LDA" | "STR" | "LDR" | "STB" | "LDB":                  # register | label to instruction
+                isRegister(l,second)
+                isLabel(l, third)
                 labelIsInstruction(third)
+            case 'MOV' | 'ADD' | 'SUB' | 'MUL' | 'DIV' | 'AND' | 'OR' | 'CMP' | 'SDIV' | 'IALLC':        # register | register
+                isRegister(l,second)
+                isRegister(l,third)
+            case 'ADDI' | 'MOVI' | 'MULI' | 'DIVI' |  'CMPI' | 'ALCI' | 'ALLC':                          # register | integer
+                isRegister(l,second)
+                isInteger(l, third)
+            case 'TRP':                                                                                  # integer
+                isInteger(l, second)
+            case 'ISTR' | 'ILTR' | 'ISTB' | 'ILDB':                                                      # register | label
+                isRegister(l,second)
+                isLabel(l, third)
+            case 'CALL':
+                isLabel(l, second)
+

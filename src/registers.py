@@ -11,6 +11,9 @@ class Register():
             if value.isdigit():
                 self.value = '{0:032b}'.format(int(value))
 
+    def getInt(self):
+        return int(self.value, 2)
+    
     def get(self):
         return self.value
     
