@@ -1,6 +1,6 @@
 import sys
 from enum import Enum
-import re
+import re, shlex
 try:
     import src.registers as regs
 except:
@@ -60,7 +60,6 @@ class instructions(Enum):
     RET = 45
 
 def toCode(line):
-
     if firstInstruction[0] == -1:
         firstInstruction[0] = line
     
@@ -95,7 +94,7 @@ def assemble(lines):
     labels = {}
     # Directives and label dictionary
     for i,l in enumerate(lines):
-        line = l.split()
+        line = shlex.split(l, posix=False)
         if (label := re.search("^[a-zA-Z0-9][a-zA-Z0-9_]*", line[0])) and line[0] not in instructions.__members__:
             if len(line) < 2:
                 error+='Invalid syntax in "' + l + '"  labels cannot be on otherwise empty line.\n'
@@ -125,6 +124,7 @@ def assemble(lines):
     # Directive 
         if first[0] == '.' and first[1:] in directives.__members__:
             if firstInstruction[0]!=-1:
+                print(firstInstruction)
                 error+='"' + l + '" not in data section...\n'
             match first[1:]:
                 case "INT":

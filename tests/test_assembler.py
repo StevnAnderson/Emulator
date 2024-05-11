@@ -8,6 +8,7 @@ except:
 class TestAssembler(unittest.TestCase):
 
     def test_assemble(self):
+        assembler.firstInstruction = [-1]
         testString = [
             ".INT #-3",
             "MAIN MOV r2 r1",
@@ -20,6 +21,7 @@ class TestAssembler(unittest.TestCase):
 
 
     def test_noMain(self):
+        assembler.firstInstruction = [-1]
         testString = [
             ".INT #0",
             " MOV r2 r1",
@@ -31,6 +33,7 @@ class TestAssembler(unittest.TestCase):
         self.assertEqual(labels, {})
 
     def test_str(self):
+        assembler.firstInstruction = [-1]
         testString = [
             ".STR \"Hello World\"",
             "MAIN MOV r2 r1",
@@ -43,4 +46,4 @@ class TestAssembler(unittest.TestCase):
 
 if __name__ == '__main__':
     t = TestAssembler()
-    t.test_noMain()
+    t.test_str()
