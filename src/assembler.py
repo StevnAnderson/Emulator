@@ -6,8 +6,8 @@ try:
 except:
     import registers as regs
 
-r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, r15, pc, sl, sb, sp, fp, hp = regs.registers.values()
-registers = [r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, r15, pc, sl, sb, sp, fp, hp]
+R0, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15, pc, sl, sb, sp, fp, hp = regs.registers.values()
+registers = {'R0':R0, 'R1':R1, 'R2':R2, 'R3':R3, 'R4':R4, 'R5':R5, 'R6':R6, 'R7':R7, 'R8':R8, 'R9':R9, 'R10':R10, 'R11':R11, 'R12':R12, 'R13':R13, 'R14':R14, 'R15':R15, 'pc':pc, 'sl':sl, 'sb':sb, 'sp':sp, 'fp':fp, 'hp':hp} 
 firstInstruction = [-1]
 stackSize = 500
 memory = []
@@ -64,7 +64,7 @@ def toCode(line):
         firstInstruction[0] = line
     
 def labelIsInstruction(l, label, labels, error):
-    if labels[label] < firstInstruction:
+    if labels[label] < firstInstruction[0]:
         return 'Invalid syntax in "' + l + '" ' + label +' cannot jump to directives.\n'
     return ''
 
@@ -74,7 +74,7 @@ def labelIsDirective(l, label, labels):
     return ''
         
 def isRegister(l, name):
-    if not name or name not in registers:
+    if not name or name[0] != 'R' or name not in registers:
         return 'Invalid syntax in "' + l + '" ' + name +' instruction must have a valid register as second operand.\n'
     return ''
 
@@ -101,13 +101,13 @@ def assemble(lines):
                 continue
             if label[0] in labels:
                 error+='Invalid syntax in "' + l + '"  label "' + label[0] + '" already used.\n'
-            labels[label[0]] = i+1
+            labels[label[0].upper()] = i+1
             first = line[1].upper()
             if len(line) > 2:
                 second = line[2].upper()
             else:
                 second = None
-            if len(line)>4:
+            if len(line)>=4:
                 third = line[3].upper()
             else:
                 third = None
@@ -138,17 +138,18 @@ def assemble(lines):
                         elif second[0] == '#' and not second[1:].lstrip('-').isdigit():
                             error+='Invalid syntax in "' + l + '"  BYT data numbers must have a pound and number as second operand.  example: ".BYT #12"\n'
                 case "BTS":
-                    if not second or second[0] != '#' or not second[1:].lstrip('-').isdigit():
-                        error+='Invalid syntax in "' + l + '"  BTS data must have pound then number as second operand. example: ".BTS #12"\n'
+                    if not second or second[0] != '#' or not second[1:].isdigit():
+                        error+='Invalid syntax in "' + l + '"  BTS data must have pound then an unsigned number as second operand. example: ".BTS #12"\n'
                 case "STR":
                     if not second:
                         error+='Invalid syntax in "' + l + '"  STR data must have string or string length as second operand. examples: ".STR \'hello\'", ".STR #12"\n'
-                    elif second[0] == '#' and not second[1:].lstrip('-').isdigit():
-                        error+='Invalid syntax in "' + l + '"  STR data numbers must have a pound and number as second operand.  example: ".STR #12"\n'
-                    elif second[0] != '"' and not re.search("\"[a-zA-Z0-9!@#$%^&*)-+_=?<>}{[]\\,./:;( `~]*\"", second):
-                        error+='Invalid syntax in "' + l + '"  STR data must be string in double quotes. examples: ".STR "hello""\n'
-                    elif second[0] != '#' and second[0] != '"':
-                        print(second[0])
+                    elif second[0] == '#':
+                        if not second[1:].lstrip('-').isdigit():
+                            error+='Invalid syntax in "' + l + '"  STR data numbers must have a pound and number as second operand.  example: ".STR #12"\n'
+                    elif second[0] == '"':
+                        if not re.search("\"[\\[\\]a-zA-Z0-9!@#$%^&*)(+\\-_=?<>}{\\,./:; \"`~]*\"", second):
+                            error+='Invalid syntax in "' + l + '"  STR data must be string in double quotes. examples: ".STR "hello""\n'
+                    else:
                         error+='Invalid syntax in "' + l + '"  STR data operand must be string or string length. examples: ".STR "hello"", ".STR #12"\n'
         if first in instructions.__members__:
             toCode(i+1)
@@ -156,26 +157,47 @@ def assemble(lines):
         error+='Invalid syntax in "' + l + '"  MAIN instruction missing.\n'
     # Instruction
     for l in lines:
+        line = shlex.split(l, posix=False)
+        if (label := re.search("^[a-zA-Z0-9][a-zA-Z0-9_]*", line[0])) and line[0] not in instructions.__members__:
+            first = line[1].upper()
+            if len(line) > 2:
+                second = line[2].upper()
+            else:
+                second = None
+            if len(line)>=4:
+                third = line[3].upper()
+            else:
+                third = None
+        else:
+            first = line[0].upper()
+            if len(line) > 1:
+                second = line[1].upper()
+            else:
+                second = None
+            if len(line)>2:
+                third = line[2].upper()
+            else:
+                third = None
         if first in instructions.__members__:
             match first:
                 case "JMP":
                     error += isLabel(l, second, labels)
-                    error += labelIsInstruction(second, labels)
+                    error += labelIsInstruction(l, second, labels, error)
                 case "JMR" | 'PSHR' | 'PSHB' | 'POPR' | 'POPB':                                              # register
                     isRegister(l,second)
-                case "BNZ" | "BGT" | "BLT" | "BRZ" | "LDA" | "STR" | "LDR" | "STB" | "LDB":                  # register | label to instruction
+                case "BNZ" | "BGT" | "BLT" | "BRZ":                                                          # register | label to instruction
                     error += isRegister(l,second)
                     error += isLabel(l, third, labels)
-                    error += labelIsInstruction(third, labels)
-                case 'MOV' | 'ADD' | 'SUB' | 'MUL' | 'DIV' | 'AND' | 'OR' | 'CMP' | 'SDIV' | 'IALLC':        # register | register
+                    error += labelIsInstruction(l,third, labels,error)
+                case 'MOV' | 'ADD' | 'SUB' | 'MUL' | 'DIV' | 'AND' | 'OR' | 'CMP' | 'SDIV' | 'IALLC' | 'ISTR' | 'ISTB' | 'ILDB':        # register | register
                     error += isRegister(l,second)
                     error += isRegister(l,third)
-                case 'ADDI' | 'MOVI' | 'MULI' | 'DIVI' |  'CMPI' | 'ALCI' | 'ALLC':                          # register | integer
+                case 'ADDI' | 'MOVI' | 'MULI' | 'DIVI' |  'CMPI' | 'ALCI':                                    # register | integer
                     error += isRegister(l,second)
                     isInteger(l, third)
                 case 'TRP':                                                                                  # integer
                     error += isInteger(l, second)
-                case 'ISTR' | 'ILTR' | 'ISTB' | 'ILDB':                                                      # register | label
+                case 'STR' | 'LDR' | 'LDB' | 'STB' | 'LDA' | 'ALLC':                                         # register | label
                     error += isRegister(l,second)
                     error += isLabel(l, third, labels)
                 case 'CALL':
