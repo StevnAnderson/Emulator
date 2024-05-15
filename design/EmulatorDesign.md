@@ -10,6 +10,7 @@
 - Attributes
     - value
 - Methods
-    -  Read(str): str - Returns the value at address as str, int, or raw based on parameter str.
-    - Write(val): None - writes the val to value, making it a string of all 1's and 0's that's no more than 96 in length, and fills in 0's to any not written.
-    - 
+    -  set(val,binary): int sets the value of address in two's complement if binary is not set. \(if it's string sets value to int first). If binary is checked then checks string is of binary format, then copies to value with prepending 0's.
+    -  get(): str returns value
+    - getInt(): int returns the value converted to integer with two's complement.
+    y
