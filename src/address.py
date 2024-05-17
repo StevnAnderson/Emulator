@@ -25,13 +25,27 @@ class Address:
     def get(self):
         return self.value
     
+    def getByte(self, index):
+        if index < 0 or index > 3 or not isinstance(index,int):
+            print('Invalid byte index "' + str(index) + '"')
+            return
+        return self.value[index*4:index*4+4]
+
+    def setByte(self, index, value):
+        if index < 0 or index > 3 or not isinstance(index,int):
+            print('Invalid byte index "' + str(index) + '"')
+            return
+        if type(value) != str:
+            print('Invalid byte value "' + str(value) + '"')
+            return
+        if [x for x in value if x != '0' and x != '1']:
+            print('Invalid binary string "' + value + '"' )
+            return
+        self.value[4*index:4*index+4] = value
+
     def getInt(self):
         if self.value[0] == '1':
             return (int(self.value,2) - (1 << 32))
         else:
             return int(self.value, 2)
 
-
-a = Address()
-a.set('-5')
-print(a.get())

@@ -202,6 +202,33 @@ def assemble(lines):
                     error += isLabel(l, third, labels)
                 case 'CALL':
                     error += isLabel(l, second, labels)
+    # Build Memory
+    for l in lines:
+        line = shlex.split(l, posix=False)
+        if (label := re.search("^[a-zA-Z0-9][a-zA-Z0-9_]*", line[0])) and line[0] not in instructions.__members__:
+            first = line[1].upper()
+            if len(line) > 2:
+                second = line[2].upper()
+            else:
+                second = None
+            if len(line)>=4:
+                third = line[3].upper()
+            else:
+                third = None
+        else:
+            first = line[0].upper()
+            if len(line) > 1:
+                second = line[1].upper()
+            else:
+                second = None
+            if len(line)>2:
+                third = line[2].upper()
+            else:
+                third = None
+        match first:
+            case '.INT':
+                pass
+    
     return (lines, labels, error)
 
 def main():
