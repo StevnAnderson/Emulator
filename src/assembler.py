@@ -88,20 +88,23 @@ def isInteger(l, name):
         return 'Invalid syntax in "' + l + '" ' + name +' INT data must have pound then number as second operand.example: ".INT #-12" \n'
     return ''
 
-def assemble(lines):
+def tokenify(lines):
     error = ''
+    oLines = lines
     lines = [l.split(';')[0] for l in lines if l.split(';')[0].strip()]
     labels = {}
+    retlines = []
     # Directives and label dictionary
     for i,l in enumerate(lines):
         line = shlex.split(l, posix=False)
         if (label := re.search("^[a-zA-Z0-9][a-zA-Z0-9_]*", line[0])) and line[0] not in instructions.__members__:
+            label = label[0]
             if len(line) < 2:
                 error+='Invalid syntax in "' + l + '"  labels cannot be on otherwise empty line.\n'
                 continue
-            if label[0] in labels:
-                error+='Invalid syntax in "' + l + '"  label "' + label[0] + '" already used.\n'
-            labels[label[0].upper()] = i+1
+            if label in labels:
+                error+='Invalid syntax in "' + l + '"  label "' + label + '" already used.\n'
+            labels[label.upper()] = i+1
             first = line[1].upper()
             if len(line) > 2:
                 second = line[2].upper()
@@ -112,6 +115,7 @@ def assemble(lines):
             else:
                 third = None
         else:
+            label = None
             first = line[0].upper()
             if len(line) > 1:
                 second = line[1].upper()
@@ -121,7 +125,17 @@ def assemble(lines):
                 third = line[2].upper()
             else:
                 third = None
+        retlines.append([label, first, second, third])
+    return [oLines, retlines, labels, error]
+        
+def assemble(lines):
+    olines,slines, labels, error = tokenify(lines)
+    if error:
+        sys.stderr.write(error)
+        exit(1)
     # Directive 
+    for i,(l,line) in enumerate(zip(lines,slines)):
+        _, first, second, third = line
         if first[0] == '.' and first[1:] in directives.__members__:
             if firstInstruction[0]!=-1:
                 print(firstInstruction)
@@ -152,32 +166,12 @@ def assemble(lines):
                     else:
                         error+='Invalid syntax in "' + l + '"  STR data operand must be string or string length. examples: ".STR "hello"", ".STR #12"\n'
         if first in instructions.__members__:
-            toCode(i+1)
+            toCode( i +1)
     if 'MAIN' not in labels:
         error+='Invalid syntax in "' + l + '"  MAIN instruction missing.\n'
     # Instruction
-    for l in lines:
-        line = shlex.split(l, posix=False)
-        if (label := re.search("^[a-zA-Z0-9][a-zA-Z0-9_]*", line[0])) and line[0] not in instructions.__members__:
-            first = line[1].upper()
-            if len(line) > 2:
-                second = line[2].upper()
-            else:
-                second = None
-            if len(line)>=4:
-                third = line[3].upper()
-            else:
-                third = None
-        else:
-            first = line[0].upper()
-            if len(line) > 1:
-                second = line[1].upper()
-            else:
-                second = None
-            if len(line)>2:
-                third = line[2].upper()
-            else:
-                third = None
+    for (oline,sline) in zip(olines,slines):
+        _, first, second, third = sline
         if first in instructions.__members__:
             match first:
                 case "JMP":
@@ -203,33 +197,13 @@ def assemble(lines):
                 case 'CALL':
                     error += isLabel(l, second, labels)
     # Build Memory
-    for l in lines:
-        line = shlex.split(l, posix=False)
-        if (label := re.search("^[a-zA-Z0-9][a-zA-Z0-9_]*", line[0])) and line[0] not in instructions.__members__:
-            first = line[1].upper()
-            if len(line) > 2:
-                second = line[2].upper()
-            else:
-                second = None
-            if len(line)>=4:
-                third = line[3].upper()
-            else:
-                third = None
-        else:
-            first = line[0].upper()
-            if len(line) > 1:
-                second = line[1].upper()
-            else:
-                second = None
-            if len(line)>2:
-                third = line[2].upper()
-            else:
-                third = None
+    for (oline,sline) in zip(olines,slines):
+        label, first, second, third = sline
         match first:
             case '.INT':
                 pass
     
-    return (lines, labels, error)
+    return (olines, slines, labels, error)
 
 def main():
     if len(sys.argv) < 2:
