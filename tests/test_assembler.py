@@ -635,4 +635,4 @@ class TestAssembler(unittest.TestCase):
 
 if __name__ == '__main__':
     t = TestAssembler()
-    t.test_byt_mem()
+    t.test_int_mem()
