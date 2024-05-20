@@ -5,6 +5,10 @@ try:
     import src.registers as regs
 except:
     import registers as regs
+try:
+    import src.address as address
+except:
+    import address
 
 R0, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15, pc, sl, sb, sp, fp, hp = regs.registers.values()
 registers = {'R0':R0, 'R1':R1, 'R2':R2, 'R3':R3, 'R4':R4, 'R5':R5, 'R6':R6, 'R7':R7, 'R8':R8, 'R9':R9, 'R10':R10, 'R11':R11, 'R12':R12, 'R13':R13, 'R14':R14, 'R15':R15, 'pc':pc, 'sl':sl, 'sb':sb, 'sp':sp, 'fp':fp, 'hp':hp} 
@@ -91,6 +95,7 @@ def isInteger(l, name):
 def tokenify(lines):
     error = ''
     oLines = lines
+    oLines = [o.split(';')[0] for o in oLines if o.split(';')[0].strip()]
     lines = [l.split(';')[0] for l in lines if l.split(';')[0].strip()]
     labels = {}
     retlines = []
@@ -107,22 +112,22 @@ def tokenify(lines):
             labels[label.upper()] = i+1
             first = line[1].upper()
             if len(line) > 2:
-                second = line[2].upper()
+                second = line[2].upper() if line[2][0] != "'" else line[2]
             else:
                 second = None
             if len(line)>=4:
-                third = line[3].upper()
+                third = line[3].upper() if line[3][0] != "'" else line[3]
             else:
                 third = None
         else:
             label = None
             first = line[0].upper()
             if len(line) > 1:
-                second = line[1].upper()
+                second = line[1].upper() if line[1][0] != "'" else line[1]
             else:
                 second = None
             if len(line)>2:
-                third = line[2].upper()
+                third = line[2].upper() if line[2][0] != "'" else line[2]
             else:
                 third = None
         retlines.append([label, first, second, third])
@@ -147,10 +152,14 @@ def assemble(lines):
                     if second:
                         if second[0] != "'" and second[0] != "#":
                             error+='Invalid syntax in "' + l + '"  BYT data must be character, number, or blank. examples: ".BYT \'a\'", ".BYT #12", ".BYT"\n'
-                        elif second[0] == "'" and not second[2] == "'":
-                            error+='Invalid syntax in "' + l + '"  BYT data characters must be a single character in single quotes. example: ".BYT \'a\'"\n'
-                        elif second[0] == '#' and not second[1:].lstrip('-').isdigit():
-                            error+='Invalid syntax in "' + l + '"  BYT data numbers must have a pound and number as second operand.  example: ".BYT #12"\n'
+                        elif second[0] == "'":
+                            if not second[2] == "'":
+                                error+='Invalid syntax in "' + l + '"  BYT data characters must be a single character in single quotes. example: ".BYT \'a\'"\n'
+                        elif second[0] == '#':
+                            if  not second[1:].isdigit():
+                                error+='Invalid syntax in "' + l + '"  BYT data numbers must have a pound and number as second operand.  example: ".BYT #12"\n'
+                            if int(second[1:]) < 0 or int(second[1:]) > 255:
+                                error+='Invalid syntax in "' + l + '"  BYT data numbers must be in range 0-255.  example: ".BYT #12"\n'
                 case "BTS":
                     if not second or second[0] != '#' or not second[1:].isdigit():
                         error+='Invalid syntax in "' + l + '"  BTS data must have pound then an unsigned number as second operand. example: ".BTS #12"\n'
@@ -197,13 +206,23 @@ def assemble(lines):
                 case 'CALL':
                     error += isLabel(l, second, labels)
     # Build Memory
+    memory = []
     for (oline,sline) in zip(olines,slines):
         label, first, second, third = sline
         match first:
             case '.INT':
-                pass
-    
-    return (olines, slines, labels, error)
+                memory.append(address.Address())
+                if second:
+                    memory[-1].set(int(second[1:]))
+            case '.BYT':
+                memory.append(address.Address())
+                if second:
+                    if second[0] == "'":
+                        memory[-1].setByte(3, bin(ord(second[1])).replace('0b','') )
+                    else:
+                        memory[-1].setByte(3, bin(int(second[1:])).replace('0b','') )
+
+    return (memory,olines, slines, labels, error)
 
 def main():
     if len(sys.argv) < 2:
@@ -213,7 +232,7 @@ def main():
     with open(sys.argv[1], "r") as f:
         lines = f.readlines()
 
-    lines, labels, error = assemble(lines)
+    memory, olines, slines, labels, error = assemble(lines)
     if error:
         print(error)
         sys.stderr.write(error)

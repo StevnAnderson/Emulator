@@ -14,7 +14,7 @@ class TestAssembler(unittest.TestCase):
             "MAIN MOV r2 r1",
             "TRP #0"
         ]
-        lines, slines, labels, error = assembler.assemble(testString)
+        memory,lines, slines, labels, error = assembler.assemble(testString)
         self.assertEqual(lines, testString)
         self.assertEqual(error, '')
         self.assertEqual(labels, {'MAIN': 2})
@@ -27,7 +27,7 @@ class TestAssembler(unittest.TestCase):
             " MOV r2 r1",
             "TRP #0"
         ]
-        lines, slines, labels, error = assembler.assemble(testString)
+        memory,lines, slines, labels, error = assembler.assemble(testString)
         self.assertEqual(lines, testString)
         self.assertNotEqual(error, '')
         self.assertEqual(labels, {})
@@ -40,7 +40,7 @@ class TestAssembler(unittest.TestCase):
             "MAIN MOV r2 r1",
             "TRP #0"
         ]
-        lines, slines, labels, error = assembler.assemble(testString)
+        memory,lines, slines, labels, error = assembler.assemble(testString)
         self.assertEqual(lines, testString)
         self.assertEqual(error, '')
         self.assertEqual(labels, {'MAIN': 3})
@@ -56,7 +56,7 @@ class TestAssembler(unittest.TestCase):
             "MAIN MOV r2 r1",
             "TRP #0"
         ]
-        lines, slines, labels, error = assembler.assemble(testString)
+        memory,lines, slines, labels, error = assembler.assemble(testString)
         self.assertEqual(lines, testString)
         self.assertEqual(error, '')
         assembler.firstInstruction = [-1]
@@ -65,7 +65,7 @@ class TestAssembler(unittest.TestCase):
             "MAIN MOV r2 r1",
             "TRP #0"
         ]
-        lines, slines, labels, error = assembler.assemble(testString)
+        memory,lines, slines, labels, error = assembler.assemble(testString)
         self.assertEqual(lines, testString)
         self.assertNotEqual(error, '')
         self.assertEqual(labels, {'MAIN': 2})
@@ -78,7 +78,7 @@ class TestAssembler(unittest.TestCase):
             "MAIN MOV r2 r1",
             "TRP #0"
         ]
-        lines, slines, labels, error = assembler.assemble(testString)
+        memory,lines, slines, labels, error = assembler.assemble(testString)
         self.assertEqual(lines, testString)
         self.assertEqual(labels, {'THING': 2, 'MAIN': 3})
         self.assertEqual(error, '')
@@ -88,7 +88,7 @@ class TestAssembler(unittest.TestCase):
             "MAIN MOV r2 r1",
             "TRP #0"
         ]        
-        lines, slines, labels, error = assembler.assemble(testString)
+        memory,lines, slines, labels, error = assembler.assemble(testString)
         self.assertNotEqual(error, '')
         assembler.firstInstruction = [-1]
         testString = [
@@ -96,7 +96,7 @@ class TestAssembler(unittest.TestCase):
             "MAIN MOV r2 r1",
             "TRP #0"
         ]        
-        lines, slines, labels, error = assembler.assemble(testString)
+        memory,lines, slines, labels, error = assembler.assemble(testString)
         self.assertNotEqual(error, '')
 
     def test_registers(self):
@@ -112,7 +112,7 @@ class TestAssembler(unittest.TestCase):
             "MOV r15 r0",
             "TRP #0"
         ]
-        lines, slines, labels, error = assembler.assemble(testString)
+        memory,lines, slines, labels, error = assembler.assemble(testString)
         self.assertEqual(lines, testString)
         self.assertEqual(error, '')
         assembler.firstInstruction = [-1]
@@ -120,34 +120,34 @@ class TestAssembler(unittest.TestCase):
             "MAIN MOV sl r1",
             "TRP #0"
         ]
-        lines, slines, labels, error = assembler.assemble(testString)
+        memory,lines, slines, labels, error = assembler.assemble(testString)
         self.assertNotEqual(error, '')
         assembler.firstInstruction = [-1]
         testString = [
             "MAIN MOV sb r1",
         ]
-        lines, slines, labels, error = assembler.assemble(testString)
+        memory,lines, slines, labels, error = assembler.assemble(testString)
         self.assertNotEqual(error, '')
         assembler.firstInstruction = [-1]
         testString = [
             "MAIN MOV sp r1",
             "TRP #0"
         ]
-        lines, slines, labels, error = assembler.assemble(testString)
+        memory,lines, slines, labels, error = assembler.assemble(testString)
         self.assertNotEqual(error, '')
         assembler.firstInstruction = [-1]
         testString = [
             "MAIN MOV fp r1",
             "TRP #0"
         ]
-        lines, slines, labels, error = assembler.assemble(testString)
+        memory,lines, slines, labels, error = assembler.assemble(testString)
         self.assertNotEqual(error, '')
         assembler.firstInstruction = [-1]
         testString = [
             "MAIN MOV hp r1",
             "TRP #0"
         ]
-        lines, slines, labels, error = assembler.assemble(testString)
+        memory,lines, slines, labels, error = assembler.assemble(testString)
         self.assertNotEqual(error, '')
 
     def test_jmp(self):
@@ -157,7 +157,7 @@ class TestAssembler(unittest.TestCase):
             "JMP end",
             "end TRP #0"
         ]
-        lines, slines, labels, error = assembler.assemble(testString)
+        memory,lines, slines, labels, error = assembler.assemble(testString)
         self.assertEqual(lines, testString)
         self.assertEqual(error, '')
         self.assertEqual(labels, {'MAIN': 1, 'END': 3})
@@ -170,7 +170,7 @@ class TestAssembler(unittest.TestCase):
             "MOV r0 r1",
             "end TRP #0"
         ]
-        lines, slines, labels, error = assembler.assemble(testString)
+        memory,lines, slines, labels, error = assembler.assemble(testString)
         self.assertEqual(lines, testString)
         self.assertEqual(error, '')
         self.assertEqual(labels, {'MAIN': 1, 'END': 4})
@@ -183,7 +183,7 @@ class TestAssembler(unittest.TestCase):
             "MOV r0 r1",
             "end TRP #0"
         ]
-        lines, slines, labels, error = assembler.assemble(testString)
+        memory,lines, slines, labels, error = assembler.assemble(testString)
         self.assertEqual(lines, testString)
         self.assertEqual(error, '')
 
@@ -195,7 +195,7 @@ class TestAssembler(unittest.TestCase):
             "MOV r0 r1",
             "end TRP #0"
         ]
-        lines, slines, labels, error = assembler.assemble(testString)
+        memory,lines, slines, labels, error = assembler.assemble(testString)
         self.assertEqual(lines, testString)
         self.assertEqual(error, '')
 
@@ -207,7 +207,7 @@ class TestAssembler(unittest.TestCase):
             "MOV r0 r1",
             "end TRP #0"
         ]
-        lines, slines, labels, error = assembler.assemble(testString)
+        memory,lines, slines, labels, error = assembler.assemble(testString)
         self.assertEqual(lines, testString)
         self.assertEqual(error, '')
 
@@ -219,7 +219,7 @@ class TestAssembler(unittest.TestCase):
             "MOV r1 r2",
             "end TRP #0"
         ]
-        lines, slines, labels, error = assembler.assemble(testString)
+        memory,lines, slines, labels, error = assembler.assemble(testString)
         self.assertEqual(lines, testString)
         self.assertEqual(error, '')
 
@@ -230,7 +230,7 @@ class TestAssembler(unittest.TestCase):
             "MOV r2 r1",
             "TRP #0"
         ]
-        lines, slines, labels, error = assembler.assemble(testString)
+        memory,lines, slines, labels, error = assembler.assemble(testString)
         self.assertEqual(lines, testString)
         self.assertEqual(error, '')
 
@@ -240,7 +240,7 @@ class TestAssembler(unittest.TestCase):
             "MAIN LDA r2 end",
             "end TRP #0"
         ]
-        lines, slines, labels, error = assembler.assemble(testString)
+        memory,lines, slines, labels, error = assembler.assemble(testString)
         self.assertEqual(lines, testString)
         self.assertEqual(error, '')
 
@@ -252,7 +252,7 @@ class TestAssembler(unittest.TestCase):
             "STR r2 one",
             "TRP #0"
         ]
-        lines, slines, labels, error = assembler.assemble(testString)
+        memory,lines, slines, labels, error = assembler.assemble(testString)
         self.assertEqual(lines, testString)
         self.assertEqual(error, '')
 
@@ -263,7 +263,7 @@ class TestAssembler(unittest.TestCase):
             "MAIN LDR r2 one",
             "TRP #0"
         ]
-        lines, slines, labels, error = assembler.assemble(testString)
+        memory,lines, slines, labels, error = assembler.assemble(testString)
         self.assertEqual(lines, testString)
         self.assertEqual(error, '')
 
@@ -274,7 +274,7 @@ class TestAssembler(unittest.TestCase):
             "MAIN STB r2 one",
             "TRP #0"
         ]
-        lines, slines, labels, error = assembler.assemble(testString)
+        memory,lines, slines, labels, error = assembler.assemble(testString)
         self.assertEqual(lines, testString)
         self.assertEqual(error, '')
 
@@ -285,7 +285,7 @@ class TestAssembler(unittest.TestCase):
             "MAIN LDB r2 one",
             "TRP #0"
         ]
-        lines, slines, labels, error = assembler.assemble(testString)
+        memory,lines, slines, labels, error = assembler.assemble(testString)
         self.assertEqual(lines, testString)
         self.assertEqual(error, '')
     
@@ -297,7 +297,7 @@ class TestAssembler(unittest.TestCase):
             "ADD r2 r1",
             "TRP #0"
         ]
-        lines, slines, labels, error = assembler.assemble(testString)
+        memory,lines, slines, labels, error = assembler.assemble(testString)
         self.assertEqual(lines, testString)
         self.assertEqual(error, '')
 
@@ -307,7 +307,7 @@ class TestAssembler(unittest.TestCase):
             "MAIN ADDI r2 #1",
             "TRP #0"
         ]
-        lines, slines, labels, error = assembler.assemble(testString)
+        memory,lines, slines, labels, error = assembler.assemble(testString)
         self.assertEqual(lines, testString)
         self.assertEqual(error, '')
 
@@ -318,7 +318,7 @@ class TestAssembler(unittest.TestCase):
             "SUB r2 r2",
             "TRP #0"
         ]
-        lines, slines, labels, error = assembler.assemble(testString)
+        memory,lines, slines, labels, error = assembler.assemble(testString)
         self.assertEqual(lines, testString)
         self.assertEqual(error, '')
 
@@ -329,7 +329,7 @@ class TestAssembler(unittest.TestCase):
             "MUL r2 r2",
             "TRP #0"
         ]
-        lines, slines, labels, error = assembler.assemble(testString)
+        memory,lines, slines, labels, error = assembler.assemble(testString)
         self.assertEqual(lines, testString)
         self.assertEqual(error, '')
 
@@ -341,7 +341,7 @@ class TestAssembler(unittest.TestCase):
             "DIV r2 r1",
             "TRP #0"
         ]
-        lines, slines, labels, error = assembler.assemble(testString)
+        memory,lines, slines, labels, error = assembler.assemble(testString)
         self.assertEqual(lines, testString)
         self.assertEqual(error, '')
 
@@ -353,7 +353,7 @@ class TestAssembler(unittest.TestCase):
             "AND r2 r1",
             "TRP #0"
         ]
-        lines, slines, labels, error = assembler.assemble(testString)
+        memory,lines, slines, labels, error = assembler.assemble(testString)
         self.assertEqual(lines, testString)
         self.assertEqual(error, '')
         
@@ -365,7 +365,7 @@ class TestAssembler(unittest.TestCase):
             "OR r2 r1",
             "TRP #0"
         ]
-        lines, slines, labels, error = assembler.assemble(testString)
+        memory,lines, slines, labels, error = assembler.assemble(testString)
         self.assertEqual(lines, testString)
         self.assertEqual(error, '')
 
@@ -377,7 +377,7 @@ class TestAssembler(unittest.TestCase):
             "CMP r1 r2",
             "TRP #0"
         ]
-        lines, slines, labels, error = assembler.assemble(testString)
+        memory,lines, slines, labels, error = assembler.assemble(testString)
         self.assertEqual(lines, testString)
         self.assertEqual(error, '')
 
@@ -395,7 +395,7 @@ class TestAssembler(unittest.TestCase):
             "TRP #5",
             "TRP #0"
         ]
-        lines, slines, labels, error = assembler.assemble(testString)
+        memory,lines, slines, labels, error = assembler.assemble(testString)
         self.assertEqual(lines, testString)
         self.assertEqual(error, '')
 
@@ -408,7 +408,7 @@ class TestAssembler(unittest.TestCase):
             "ISTR R1 R2",
             "TRP #0"
         ]
-        lines, slines, labels, error = assembler.assemble(testString)
+        memory,lines, slines, labels, error = assembler.assemble(testString)
         self.assertEqual(lines, testString)
         self.assertEqual(error, '')
 
@@ -421,7 +421,7 @@ class TestAssembler(unittest.TestCase):
             "ILDR R1 R2",
             "TRP #0"
         ]
-        lines, slines, labels, error = assembler.assemble(testString)
+        memory,lines, slines, labels, error = assembler.assemble(testString)
         self.assertEqual(lines, testString)
         self.assertEqual(error, '')
 
@@ -434,7 +434,7 @@ class TestAssembler(unittest.TestCase):
             "ISTB R1 R2",
             "TRP #0"
         ]
-        lines, slines, labels, error = assembler.assemble(testString)
+        memory,lines, slines, labels, error = assembler.assemble(testString)
         self.assertEqual(lines, testString)
         self.assertEqual(error, '')
 
@@ -446,7 +446,7 @@ class TestAssembler(unittest.TestCase):
             "ILDB R1 R2",
             "TRP #0"
         ]
-        lines, slines, labels, error = assembler.assemble(testString)
+        memory,lines, slines, labels, error = assembler.assemble(testString)
         self.assertEqual(lines, testString)
         self.assertEqual(error, '')
 
@@ -456,7 +456,7 @@ class TestAssembler(unittest.TestCase):
             "MAIN MOVI R1 #1",
             "TRP #0"
         ]
-        lines, slines, labels, error = assembler.assemble(testString)
+        memory,lines, slines, labels, error = assembler.assemble(testString)
         self.assertEqual(lines, testString)
         self.assertEqual(error, '')    
 
@@ -467,7 +467,7 @@ class TestAssembler(unittest.TestCase):
             "CMPI R1 #1",
             "TRP #0"
         ]        
-        lines, slines, labels, error = assembler.assemble(testString)
+        memory,lines, slines, labels, error = assembler.assemble(testString)
         self.assertEqual(lines, testString)
         self.assertEqual(error, '')
 
@@ -478,7 +478,7 @@ class TestAssembler(unittest.TestCase):
             "MULI R1 #3",
             "TRP #0"
         ]
-        lines, slines, labels, error = assembler.assemble(testString)
+        memory,lines, slines, labels, error = assembler.assemble(testString)
         self.assertEqual(lines, testString)
         self.assertEqual(error, '')
 
@@ -489,7 +489,7 @@ class TestAssembler(unittest.TestCase):
             "DIVI R1 #3",
             "TRP #0"
         ]
-        lines, slines, labels, error = assembler.assemble(testString)
+        memory,lines, slines, labels, error = assembler.assemble(testString)
         self.assertEqual(lines, testString)
         self.assertEqual(error, '')
 
@@ -499,7 +499,7 @@ class TestAssembler(unittest.TestCase):
             "MAIN ALCI R1 #3",
             "TRP #0"
         ]
-        lines, slines, labels, error = assembler.assemble(testString)
+        memory,lines, slines, labels, error = assembler.assemble(testString)
         self.assertEqual(lines, testString)
         self.assertEqual(error, '')
 
@@ -510,7 +510,7 @@ class TestAssembler(unittest.TestCase):
             "MAIN ALLC R1 goto",
             "TRP #0"
         ]
-        lines, slines, labels, error = assembler.assemble(testString)
+        memory,lines, slines, labels, error = assembler.assemble(testString)
         self.assertEqual(lines, testString)
         self.assertEqual(error, '')
 
@@ -522,7 +522,7 @@ class TestAssembler(unittest.TestCase):
             "IALLC R1 R2",
             "TRP #0"
         ]
-        lines, slines, labels, error = assembler.assemble(testString)
+        memory,lines, slines, labels, error = assembler.assemble(testString)
         self.assertEqual(lines, testString)
         self.assertEqual(error, '')
     
@@ -534,7 +534,7 @@ class TestAssembler(unittest.TestCase):
             "SDIV R1 R2",
             "TRP #0"
         ]
-        lines, slines, labels, error = assembler.assemble(testString)
+        memory,lines, slines, labels, error = assembler.assemble(testString)
         self.assertEqual(lines, testString)
         self.assertEqual(error, '')
 
@@ -544,7 +544,7 @@ class TestAssembler(unittest.TestCase):
             "MAIN PSHR R1",
             "TRP #0"
         ]
-        lines, slines, labels, error = assembler.assemble(testString)
+        memory,lines, slines, labels, error = assembler.assemble(testString)
         self.assertEqual(lines, testString)
         self.assertEqual(error, '')
 
@@ -554,7 +554,7 @@ class TestAssembler(unittest.TestCase):
             "MAIN PSHB R1",
             "TRP #0"
         ]
-        lines, slines, labels, error = assembler.assemble(testString)
+        memory,lines, slines, labels, error = assembler.assemble(testString)
         self.assertEqual(lines, testString)
         self.assertEqual(error, '')
     
@@ -564,7 +564,7 @@ class TestAssembler(unittest.TestCase):
             "MAIN POPR R1",
             "TRP #0"
         ]
-        lines, slines, labels, error = assembler.assemble(testString)
+        memory,lines, slines, labels, error = assembler.assemble(testString)
         self.assertEqual(lines, testString)
         self.assertEqual(error, '')
 
@@ -574,7 +574,7 @@ class TestAssembler(unittest.TestCase):
             "MAIN POPB R1",
             "TRP #0"
         ]
-        lines, slines, labels, error = assembler.assemble(testString)
+        memory,lines, slines, labels, error = assembler.assemble(testString)
         self.assertEqual(lines, testString)
         self.assertEqual(error, '')
 
@@ -585,7 +585,7 @@ class TestAssembler(unittest.TestCase):
             "FUN ADDI R1 #1",
             "TRP #0"
         ]
-        lines, slines, labels, error = assembler.assemble(testString)
+        memory,lines, slines, labels, error = assembler.assemble(testString)
         self.assertEqual(lines, testString)
         self.assertEqual(error, '')
 
@@ -597,10 +597,42 @@ class TestAssembler(unittest.TestCase):
             "FUN ADDI R1 #1",
             "RET"
         ]
-        lines, slines, labels, error = assembler.assemble(testString)
+        memory,lines, slines, labels, error = assembler.assemble(testString)
         self.assertEqual(lines, testString)
+        self.assertEqual(error, '')
+
+    def test_int_mem(self):
+        assembler.firstInstruction = [-1]
+        testString = [
+            ".INT #0",
+            ".INT #1",
+            ".INT #-2",
+            "MAIN MOV r2 r1",
+            "TRP #0"
+        ]
+        memory,_, _, _, error = assembler.assemble(testString)
+        self.assertEqual(int(memory[0].value,2), 0)
+        self.assertEqual(int(memory[1].value,2), 1)
+        self.assertEqual(memory[2].value, '11111111111111111111111111111110')
+        self.assertEqual(error, '')
+    
+    def test_byt_mem(self):
+        assembler.firstInstruction = [-1]
+        testString = [
+            ".BYT",
+            ".BYT #3",
+            ".BYT 'a'",
+            ".BYT '\n'",
+            "MAIN MOV r2 r1",
+            "TRP #0"
+        ]
+        memory,_, _, _, error = assembler.assemble(testString)
+        self.assertEqual(int(memory[0].value,2), 0)
+        self.assertEqual(int(memory[1].value,2), 3)
+        self.assertEqual(int(memory[2].value,2), 97)
+        self.assertEqual(int(memory[3].value,2), 10)
         self.assertEqual(error, '')
 
 if __name__ == '__main__':
     t = TestAssembler()
-    t.test_assemble()
+    t.test_byt_mem()

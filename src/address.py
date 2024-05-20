@@ -7,14 +7,15 @@ class Address:
     
     def set(self, value, binary=False):
         if not binary:
-            if type(value) == str:
-                value = int(value)
-            if value < 0:
-                self.value = '{0:032b}'.format((1 << self.nbits) + value)
-            else:
-                if (value & (1 << (self.nbits - 1))) != 0:
-                    value = value - (1 << self.nbits)
-                self.value = '{0:032b}'.format(value)
+            if type(value) == int:
+                if value < 0:
+                    self.value = '{0:032b}'.format((1 << self.nbits) + value)
+                else:
+                    if (value & (1 << (self.nbits - 1))) != 0:
+                        value = value - (1 << self.nbits)
+                    self.value = '{0:032b}'.format(value)
+            elif type(value) == str:
+                self.setByte(3, ord(value))
         else:
             if type(value) == str:
                 if [x for x in value if x != '0' and x != '1']:
@@ -30,18 +31,21 @@ class Address:
             print('Invalid byte index "' + str(index) + '"')
             return
         return self.value[index*4:index*4+4]
+    
+    def getAscii(self,value):
+        return chr(int(self.getByte(3),2))
 
     def setByte(self, index, value):
         if index < 0 or index > 3 or not isinstance(index,int):
             print('Invalid byte index "' + str(index) + '"')
             return
-        if type(value) != str:
-            print('Invalid byte value "' + str(value) + '"')
+        if len(value) > 8:
+            print('Invalid byte length "' + str(len(value)) + '"')
             return
         if [x for x in value if x != '0' and x != '1']:
             print('Invalid binary string "' + value + '"' )
             return
-        self.value[4*index:4*index+4] = value
+        self.value = self.value[:index*8] + value + self.value[index*8+8:]
 
     def getInt(self):
         if self.value[0] == '1':
