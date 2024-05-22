@@ -21,31 +21,13 @@ class Address:
                 if [x for x in value if x != '0' and x != '1']:
                     print('Invalid binary string "' + value + '"' )
                     return
-                self.value = ('{0:0' + str(self.nbits) + 'b}').format(int(value))
+                self.value = ('{0:0' + str(self.nbits) + 'b}').format(int(value,2))
 
     def get(self):
         return self.value
     
-    def getByte(self, index):
-        if index < 0 or index > 3 or not isinstance(index,int):
-            print('Invalid byte index "' + str(index) + '"')
-            return
-        return self.value[index*4:index*4+4]
-    
     def getAscii(self,value):
         return chr(int(self.getByte(3),2))
-
-    def setByte(self, index, value):
-        if index < 0 or index > 3 or not isinstance(index,int):
-            print('Invalid byte index "' + str(index) + '"')
-            return
-        if len(value) > 8:
-            print('Invalid byte length "' + str(len(value)) + '"')
-            return
-        if [x for x in value if x != '0' and x != '1']:
-            print('Invalid binary string "' + value + '"' )
-            return
-        self.value = self.value[:index*8] + value + self.value[index*8+8:]
 
     def getInt(self):
         if self.value[0] == '1':

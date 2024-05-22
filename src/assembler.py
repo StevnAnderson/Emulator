@@ -63,6 +63,16 @@ class instructions(Enum):
     CALL = 44
     RET = 45
 
+def makeBinary(value, bits=32):
+    if value < 0:
+        value = ('{0:0' + str(bits) + 'b}').format((1 << bits) + value)
+    else:
+        if (value & (1 << (bits - 1))) != 0:
+            value = value - (1 << bits)
+        value = ('{0:0' + str(bits) + 'b}').format(value)
+    return value
+
+
 def toCode(line):
     if firstInstruction[0] == -1:
         firstInstruction[0] = line
@@ -78,18 +88,18 @@ def labelIsDirective(l, label, labels):
     return ''
         
 def isRegister(l, name):
-    if not name or name[0] != 'R' or name not in registers:
-        return 'Invalid syntax in "' + l + '" ' + name +' instruction must have a valid register as second operand.\n'
+    if not name or name[0].upper() != 'R' or name.upper() not in registers:
+        return 'Invalid syntax in "' + l + '" ' + name +' instruction must have a valid register as operand1 operand.\n'
     return ''
 
 def isLabel(l, name, labels):
     if not name or name not in labels:
-        return 'Invalid syntax in "' + l + '" ' + name +' instruction must have a valid label as second operand.\n'
+        return 'Invalid syntax in "' + l + '" ' + name +' instruction must have a valid label as operand1 operand.\n'
     return ''
 
 def isInteger(l, name):
     if not name or name[0] != '#' or not name[1:].lstrip('-').isdigit():
-        return 'Invalid syntax in "' + l + '" ' + name +' INT data must have pound then number as second operand.example: ".INT #-12" \n'
+        return 'Invalid syntax in "' + l + '" ' + name +' INT data must have pound then number as operand1 operand.example: ".INT #-12" \n'
     return ''
 
 def tokenify(lines):
@@ -109,28 +119,40 @@ def tokenify(lines):
                 continue
             if label in labels:
                 error+='Invalid syntax in "' + l + '"  label "' + label + '" already used.\n'
-            labels[label.upper()] = i+1
-            first = line[1].upper()
+            labels[label] = i+1
+            operator = line[1].upper()
             if len(line) > 2:
-                second = line[2].upper() if line[2][0] != "'" else line[2]
+                if line[2] in registers:
+                    operand1 = line[2].upper() if line[2][0] != "'" else line[2]
+                else:
+                    operand1 = line[2] if line[2][0] != "'" else line[2]
             else:
-                second = None
+                operand1 = None
             if len(line)>=4:
-                third = line[3].upper() if line[3][0] != "'" else line[3]
+                if line[3] in registers:
+                    operand2 = line[3].upper() if line[3][0] != "'" else line[3]
+                else:
+                    operand2 = line[3] if line[3][0] != "'" else line[3]
             else:
-                third = None
+                operand2 = None
         else:
             label = None
-            first = line[0].upper()
+            operator = line[0].upper()
             if len(line) > 1:
-                second = line[1].upper() if line[1][0] != "'" else line[1]
+                if line[1] in registers:
+                    operand1 = line[1].upper() if line[1][0] != "'" else line[1]
+                else:
+                    operand1 = line[1] if line[1][0] != "'" else line[1]
             else:
-                second = None
+                operand1 = None
             if len(line)>2:
-                third = line[2].upper() if line[2][0] != "'" else line[2]
+                if line[2] in registers:
+                    operand2 = line[2].upper() if line[2][0] != "'" else line[2]
+                else:
+                    operand2 = line[2] if line[2][0] != "'" else line[2]
             else:
-                third = None
-        retlines.append([label, first, second, third])
+                operand2 = None
+        retlines.append([label, operator, operand1, operand2])
     return [oLines, retlines, labels, error]
         
 def assemble(lines):
@@ -140,88 +162,116 @@ def assemble(lines):
         exit(1)
     # Directive 
     for i,(l,line) in enumerate(zip(lines,slines)):
-        _, first, second, third = line
-        if first[0] == '.' and first[1:] in directives.__members__:
+        _, operator, operand1, operand2 = line
+        if operator[0] == '.' and operator[1:] in directives.__members__:
             if firstInstruction[0]!=-1:
                 print(firstInstruction)
                 error+='"' + l + '" not in data section...\n'
-            match first[1:]:
+            match operator[1:]:
                 case "INT":
-                    error += isInteger(l, second)
+                    error += isInteger(l, operand1)
                 case "BYT":
-                    if second:
-                        if second[0] != "'" and second[0] != "#":
+                    if operand1:
+                        if operand1[0] != "'" and operand1[0] != "#":
                             error+='Invalid syntax in "' + l + '"  BYT data must be character, number, or blank. examples: ".BYT \'a\'", ".BYT #12", ".BYT"\n'
-                        elif second[0] == "'":
-                            if not second[2] == "'":
+                        elif operand1[0] == "'":
+                            if not operand1[2] == "'":
                                 error+='Invalid syntax in "' + l + '"  BYT data characters must be a single character in single quotes. example: ".BYT \'a\'"\n'
-                        elif second[0] == '#':
-                            if  not second[1:].isdigit():
-                                error+='Invalid syntax in "' + l + '"  BYT data numbers must have a pound and number as second operand.  example: ".BYT #12"\n'
-                            if int(second[1:]) < 0 or int(second[1:]) > 255:
+                        elif operand1[0] == '#':
+                            if  not operand1[1:].isdigit():
+                                error+='Invalid syntax in "' + l + '"  BYT data numbers must have a pound and number as operand1 operand.  example: ".BYT #12"\n'
+                            if int(operand1[1:]) < 0 or int(operand1[1:]) > 255:
                                 error+='Invalid syntax in "' + l + '"  BYT data numbers must be in range 0-255.  example: ".BYT #12"\n'
                 case "BTS":
-                    if not second or second[0] != '#' or not second[1:].isdigit():
-                        error+='Invalid syntax in "' + l + '"  BTS data must have pound then an unsigned number as second operand. example: ".BTS #12"\n'
+                    if not operand1 or operand1[0] != '#' or not operand1[1:].isdigit():
+                        error+='Invalid syntax in "' + l + '"  BTS data must have pound then an unsigned number as operand1 operand. example: ".BTS #12"\n'
                 case "STR":
-                    if not second:
-                        error+='Invalid syntax in "' + l + '"  STR data must have string or string length as second operand. examples: ".STR \'hello\'", ".STR #12"\n'
-                    elif second[0] == '#':
-                        if not second[1:].lstrip('-').isdigit():
-                            error+='Invalid syntax in "' + l + '"  STR data numbers must have a pound and number as second operand.  example: ".STR #12"\n'
-                    elif second[0] == '"':
-                        if not re.search("\"[\\[\\]a-zA-Z0-9!@#$%^&*)(+\\-_=?<>}{\\,./:; \"`~]*\"", second):
+                    if not operand1:
+                        error+='Invalid syntax in "' + l + '"  STR data must have string or string length as operand1 operand. examples: ".STR \'hello\'", ".STR #12"\n'
+                    elif operand1[0] == '#':
+                        if not operand1[1:].lstrip('-').isdigit():
+                            error+='Invalid syntax in "' + l + '"  STR data numbers must have a pound and number as operand1 operand.  example: ".STR #12"\n'
+                    elif operand1[0] == '"':
+                        if not re.search("\"[\\[\\]a-zA-Z0-9!@#$%^&*)(+\\-_=?<>}{\\,./:; \"`~]*\"", operand1):
                             error+='Invalid syntax in "' + l + '"  STR data must be string in double quotes. examples: ".STR "hello""\n'
                     else:
                         error+='Invalid syntax in "' + l + '"  STR data operand must be string or string length. examples: ".STR "hello"", ".STR #12"\n'
-        if first in instructions.__members__:
+        if operator in instructions.__members__:
             toCode( i +1)
     if 'MAIN' not in labels:
         error+='Invalid syntax in "' + l + '"  MAIN instruction missing.\n'
     # Instruction
+    if error:
+        sys.stderr.write(error)
+        return None, olines, slines, labels, error
     for (oline,sline) in zip(olines,slines):
-        _, first, second, third = sline
-        if first in instructions.__members__:
-            match first:
+        _, operator, operand1, operand2 = sline
+        if operator in instructions.__members__:
+            match operator:
                 case "JMP":
-                    error += isLabel(l, second, labels)
-                    error += labelIsInstruction(l, second, labels, error)
+                    error += isLabel(l, operand1, labels)
+                    error += labelIsInstruction(l, operand1, labels, error)
                 case "JMR" | 'PSHR' | 'PSHB' | 'POPR' | 'POPB':                                              # register
-                    isRegister(l,second)
+                    isRegister(l,operand1)
                 case "BNZ" | "BGT" | "BLT" | "BRZ":                                                          # register | label to instruction
-                    error += isRegister(l,second)
-                    error += isLabel(l, third, labels)
-                    error += labelIsInstruction(l,third, labels,error)
+                    error += isRegister(l,operand1)
+                    error += isLabel(l, operand2, labels)
+                    error += labelIsInstruction(l,operand2, labels,error)
                 case 'MOV' | 'ADD' | 'SUB' | 'MUL' | 'DIV' | 'AND' | 'OR' | 'CMP' | 'SDIV' | 'IALLC' | 'ISTR' | 'ISTB' | 'ILDB':        # register | register
-                    error += isRegister(l,second)
-                    error += isRegister(l,third)
+                    error += isRegister(l,operand1)
+                    error += isRegister(l,operand2)
                 case 'ADDI' | 'MOVI' | 'MULI' | 'DIVI' |  'CMPI' | 'ALCI':                                    # register | integer
-                    error += isRegister(l,second)
-                    isInteger(l, third)
+                    error += isRegister(l,operand1)
+                    isInteger(l, operand2)
                 case 'TRP':                                                                                  # integer
-                    error += isInteger(l, second)
+                    error += isInteger(l, operand1)
                 case 'STR' | 'LDR' | 'LDB' | 'STB' | 'LDA' | 'ALLC':                                         # register | label
-                    error += isRegister(l,second)
-                    error += isLabel(l, third, labels)
+                    error += isRegister(l,operand1)
+                    error += isLabel(l, operand2, labels)
                 case 'CALL':
-                    error += isLabel(l, second, labels)
+                    error += isLabel(l, operand1, labels)
     # Build Memory
     memory = []
+    labels = {}
     for (oline,sline) in zip(olines,slines):
-        label, first, second, third = sline
-        match first:
+        label, operator, operand1, operand2 = sline
+        if label:
+            labels[label] = len(memory)
+        match operator:
             case '.INT':
-                memory.append(address.Address())
-                if second:
-                    memory[-1].set(int(second[1:]))
+                binary = makeBinary(int(operand1[1:]))
+                for n in range(4):
+                    memory.append(address.Address())
+                    memory[-1].set(binary[n*8:n*8+8],True)
+                if operand1:
+                    memory[-1].set(int(operand1[1:]))
             case '.BYT':
                 memory.append(address.Address())
-                if second:
-                    if second[0] == "'":
-                        memory[-1].setByte(3, bin(ord(second[1])).replace('0b','') )
+                if operand1:
+                    if operand1[0] == "'":
+                        memory[-1].set(ord(operand1[1]))
                     else:
-                        memory[-1].setByte(3, bin(int(second[1:])).replace('0b','') )
-
+                        memory[-1].set(int(operand1[1:]))
+            case '.STR':
+                memory.append(address.Address())
+                if operand1[0] == '"':
+                    memory[-1].set(len(operand1[1:-1]))
+                    for c in operand1[1:-1]:
+                        memory.append(address.Address())
+                        memory[-1].set(ord(c))
+                    memory.append(address.Address())
+                else:
+                    memory[-1].set(int(operand1[1:]))
+                    for c in operand1[1:]:
+                        memory.append(address.Address())
+                    memory.append(address.Address())
+            case '.BTS':
+                for n in range(int(operand1[1:])):
+                    memory.append(address.Address())
+            case 'JMP':
+                memory.append(address.Address())
+                memory[-1].set(1)
+                for n in range(3): memory.append(address.Address())
     return (memory,olines, slines, labels, error)
 
 def main():

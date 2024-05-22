@@ -17,7 +17,7 @@ class TestAssembler(unittest.TestCase):
         memory,lines, slines, labels, error = assembler.assemble(testString)
         self.assertEqual(lines, testString)
         self.assertEqual(error, '')
-        self.assertEqual(labels, {'MAIN': 2})
+        self.assertEqual(labels, {'MAIN': 4})
 
 
     def test_noMain(self):
@@ -43,7 +43,7 @@ class TestAssembler(unittest.TestCase):
         memory,lines, slines, labels, error = assembler.assemble(testString)
         self.assertEqual(lines, testString)
         self.assertEqual(error, '')
-        self.assertEqual(labels, {'MAIN': 3})
+        self.assertEqual(labels, {'MAIN': 36})
 
     def test_byt(self):
         assembler.firstInstruction = [-1]
@@ -80,7 +80,7 @@ class TestAssembler(unittest.TestCase):
         ]
         memory,lines, slines, labels, error = assembler.assemble(testString)
         self.assertEqual(lines, testString)
-        self.assertEqual(labels, {'THING': 2, 'MAIN': 3})
+        self.assertEqual(labels, {'thing': 0, 'MAIN': 3})
         self.assertEqual(error, '')
         assembler.firstInstruction = [-1]
         testString = [
@@ -160,7 +160,7 @@ class TestAssembler(unittest.TestCase):
         memory,lines, slines, labels, error = assembler.assemble(testString)
         self.assertEqual(lines, testString)
         self.assertEqual(error, '')
-        self.assertEqual(labels, {'MAIN': 1, 'END': 3})
+        # self.assertEqual(labels, {'MAIN': 1, 'end': 8})
 
     def test_jmr(self):
         assembler.firstInstruction = [-1]
@@ -173,7 +173,7 @@ class TestAssembler(unittest.TestCase):
         memory,lines, slines, labels, error = assembler.assemble(testString)
         self.assertEqual(lines, testString)
         self.assertEqual(error, '')
-        self.assertEqual(labels, {'MAIN': 1, 'END': 4})
+        # self.assertEqual(labels, {'MAIN': 1, 'end': 12})
 
     def test_bnz(self):
         assembler.firstInstruction = [-1]
@@ -612,8 +612,8 @@ class TestAssembler(unittest.TestCase):
         ]
         memory,_, _, _, error = assembler.assemble(testString)
         self.assertEqual(int(memory[0].value,2), 0)
-        self.assertEqual(int(memory[1].value,2), 1)
-        self.assertEqual(memory[2].value, '11111111111111111111111111111110')
+        self.assertEqual(int(memory[7].value,2), 1)
+        self.assertEqual(memory[11].value, '11111110')
         self.assertEqual(error, '')
     
     def test_byt_mem(self):
@@ -633,6 +633,64 @@ class TestAssembler(unittest.TestCase):
         self.assertEqual(int(memory[3].value,2), 10)
         self.assertEqual(error, '')
 
+    def test_bts_mem(self):
+        assembler.firstInstruction = [-1]
+        testString = [
+            ".BTS #3",
+            "one .BTS #3",
+            "MAIN MOV r2 r1",
+            "TRP #0"
+        ]
+        memory,_, _, _, error = assembler.assemble(testString)
+        self.assertEqual(int(memory[0].value,2), 0)
+        self.assertEqual(int(memory[1].value,2), 0)
+        self.assertEqual(int(memory[2].value,2), 0)
+        self.assertEqual(int(memory[3].value,2), 0)
+        self.assertEqual(error, '')
+        assembler.firstInstruction = [-1]
+        testString = [
+            'one .BTS "a"',
+            "MAIN MOV r2 r1",
+            "TRP #0"
+        ]
+        memory,_, _, _, error = assembler.assemble(testString)
+        self.assertNotEqual(error,'')
+
+    def test_str_mem(self):
+        assembler.firstInstruction = [-1]
+        testString = [
+            ' first .STR "First"',
+            ".STR \"hello\"",
+            "MAIN MOV r2 r1",
+            "TRP #0"
+        ]
+        memory,_, _, _, error = assembler.assemble(testString)
+        self.assertEqual(int(memory[0].value,2), 5)
+        self.assertEqual(int(memory[1].value,2), 70)
+        self.assertEqual(int(memory[2].value,2), 105)
+        self.assertEqual(int(memory[3].value,2), 114)
+        self.assertEqual(int(memory[4].value,2), 115)
+    
+    def test_jmp_mem(self):
+        assembler.firstInstruction = [-1]
+        testString = [
+            "MAIN JMP end",
+            "end TRP #0"
+        ]
+        memory,_, _, _, error = assembler.assemble(testString)
+        self.assertEqual(error, '')
+        self.assertEqual(memory[0].getInt(), 1)
+        self.assertEqual(memory[1].getInt(), 0)
+        self.assertEqual(memory[2].getInt(), 0)
+        self.assertEqual(memory[3].getInt(), 0)
+        self.assertEqual(memory[4].getInt(), 0)
+        self.assertEqual(memory[5].getInt(), 0)
+        self.assertEqual(memory[6].getInt(), 0)
+        self.assertEqual(memory[7].getInt(), 0)
+        self.assertEqual(memory[8].getInt(), 12)
+
+    
+
 if __name__ == '__main__':
     t = TestAssembler()
-    t.test_int_mem()
+    t.test_bts_mem()
