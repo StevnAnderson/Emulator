@@ -334,12 +334,12 @@ class TestAssembler(unittest.TestCase):
         assembler.firstInstruction = [-1]
         testString = [
             "MAIN ADDI r1 r2 #3",
-            "MUL r2 r2",
+            "MUL r2 r2 r2",
             "TRP #0"
         ]
         memory,lines, slines, labels, error = assembler.assemble(testString)
-        self.assertEqual(lines, testString)
         self.assertEqual(error, '')
+        self.assertEqual(lines, testString)
 
     def test_div(self):
         assembler.firstInstruction = [-1]
@@ -623,6 +623,18 @@ class TestAssembler(unittest.TestCase):
         self.assertEqual(int(memory[7].value,2), 1)
         self.assertEqual(memory[11].value, '11111110')
         self.assertEqual(error, '')
+        assembler.firstInstruction = [-1]
+        testString = [
+            ".INT #-3",
+            "MAIN MOV r2 r1",
+            "TRP #0"
+        ]
+        memory,_, _, _, error = assembler.assemble(testString)
+        self.assertEqual(memory[0].getInt(), -1)
+        self.assertEqual(memory[1].getInt(), -1)
+        self.assertEqual(memory[2].getInt(), -1)
+        self.assertEqual(memory[3].getInt(), -3)
+        self.assertEqual(error, '') 
     
     def test_byt_mem(self):
         assembler.firstInstruction = [-1]
@@ -787,7 +799,655 @@ class TestAssembler(unittest.TestCase):
         self.assertEqual(memory[6].getInt(), 0)
         self.assertEqual(memory[7].getInt(), 16)
     
+    def test_mov_mem(self):
+        assembler.firstInstruction = [-1]
+        testString = [
+            "MAIN MOV r0 r1",
+            "TRP #0"
+        ]
+        memory,_, _, _, error = assembler.assemble(testString)
+        self.assertEqual(error, '')
+        self.assertEqual(memory[0].getInt(), 7)
+        self.assertEqual(memory[1].getInt(), 0)
+        self.assertEqual(memory[2].getInt(), 1)
+        self.assertEqual(memory[3].getInt(), 0)
+        self.assertEqual(memory[4].getInt(), 0)
+        self.assertEqual(memory[5].getInt(), 0)
+        self.assertEqual(memory[6].getInt(), 0)
+        self.assertEqual(memory[7].getInt(), 0)
+
+    def test_movi_mem(self):
+        assembler.firstInstruction = [-1]
+        testString = [
+            "MAIN MOVI r1 #2",
+            "TRP #0"
+        ]
+        memory,_, _, _, error = assembler.assemble(testString)
+        self.assertEqual(error, '')
+        self.assertEqual(memory[0].getInt(), 8)
+        self.assertEqual(memory[1].getInt(), 1)
+        self.assertEqual(memory[2].getInt(), 0)
+        self.assertEqual(memory[3].getInt(), 0)
+        self.assertEqual(memory[4].getInt(), 0)
+        self.assertEqual(memory[5].getInt(), 0)
+        self.assertEqual(memory[6].getInt(), 0)
+        self.assertEqual(memory[7].getInt(), 2)
+
+    def test_lda_mem(self):
+        assembler.firstInstruction = [-1]
+        testString = [
+            "MAIN LDA r2 end",
+            "end TRP #0"
+        ]
+        memory,_, _, _, error = assembler.assemble(testString)
+        self.assertEqual(error, '')
+        self.assertEqual(memory[0].getInt(), 9)
+        self.assertEqual(memory[1].getInt(), 2)
+        self.assertEqual(memory[2].getInt(), 0)
+        self.assertEqual(memory[3].getInt(), 0)
+        self.assertEqual(memory[4].getInt(), 0)
+        self.assertEqual(memory[5].getInt(), 0)
+        self.assertEqual(memory[6].getInt(), 0)
+        self.assertEqual(memory[7].getInt(), 8)
+
+    def test_str_mem(self):
+        assembler.firstInstruction = [-1]
+        testString = [
+            'strlock .INT #0',
+            'addi r2 r2 #1',
+            'MAIN STR r2 strlock',
+            'TRP #0'
+        ]
+        memory,_, _, _, error = assembler.assemble(testString)
+        self.assertEqual(error, '')
+        self.assertEqual(memory[12].getInt(), 10)
+        self.assertEqual(memory[13].getInt(), 2)
+        self.assertEqual(memory[14].getInt(), 0)
+        self.assertEqual(memory[15].getInt(), 0)
+        self.assertEqual(memory[16].getInt(), 0)
+        self.assertEqual(memory[17].getInt(), 0)
+        self.assertEqual(memory[18].getInt(), 0)
+        self.assertEqual(memory[19].getInt(), 0)
+
+    def test_ldr_mem(self):
+        assembler.firstInstruction = [-1]
+        testString = [
+            '.INT #0',
+            'ldrlock .INT #12',
+            'MAIN LDR r2 ldrlock',
+            'TRP #0'
+        ]
+        memory,_, _, _, error = assembler.assemble(testString)
+        self.assertEqual(error, '')
+        self.assertEqual(memory[8].getInt(), 11)
+        self.assertEqual(memory[9].getInt(), 2)
+        self.assertEqual(memory[10].getInt(), 0)
+        self.assertEqual(memory[11].getInt(), 0)
+        self.assertEqual(memory[12].getInt(), 0)
+        self.assertEqual(memory[13].getInt(), 0)
+        self.assertEqual(memory[14].getInt(), 0)
+        self.assertEqual(memory[15].getInt(), 4)
+
+    def test_stb_mem(self):
+        assembler.firstInstruction = [-1]
+        testString = [
+            '.INT #0',
+            'one .INT #1',
+            'MAIN STB r2 one',
+            'TRP #0'
+        ]
+        memory,_, _, _, error = assembler.assemble(testString)
+        self.assertEqual(error, '')
+        self.assertEqual(memory[8].getInt(), 12)
+        self.assertEqual(memory[9].getInt(), 2)
+        self.assertEqual(memory[10].getInt(), 0)
+        self.assertEqual(memory[11].getInt(), 0)
+        self.assertEqual(memory[12].getInt(), 0)
+        self.assertEqual(memory[13].getInt(), 0)
+        self.assertEqual(memory[14].getInt(), 0)
+        self.assertEqual(memory[15].getInt(), 4)
+
+    def test_ldb_mem(self):
+        assembler.firstInstruction = [-1]
+        testString = [
+            '.INT #0',
+            'one .INT #1',
+            'MAIN LDB r2 one',
+            'TRP #0'
+        ]
+        memory,_, _, _, error = assembler.assemble(testString)
+        self.assertEqual(error, '')
+        self.assertEqual(memory[8].getInt(), 13)
+        self.assertEqual(memory[9].getInt(), 2)
+        self.assertEqual(memory[10].getInt(), 0)
+        self.assertEqual(memory[11].getInt(), 0)
+        self.assertEqual(memory[12].getInt(), 0)
+        self.assertEqual(memory[13].getInt(), 0)
+        self.assertEqual(memory[14].getInt(), 0)
+        self.assertEqual(memory[15].getInt(), 4)
+
+    def test_istr_mem(self):
+        assembler.firstInstruction = [-1]
+        testString = [
+            'MAIN ISTR r2 r1',
+            'TRP #0'
+        ]
+        memory,_, _, _, error = assembler.assemble(testString)
+        self.assertEqual(error, '')
+        self.assertEqual(memory[0].getInt(), 14)
+        self.assertEqual(memory[1].getInt(), 2)
+        self.assertEqual(memory[2].getInt(), 1)
+        self.assertEqual(memory[3].getInt(), 0)
+        self.assertEqual(memory[4].getInt(), 0)
+        self.assertEqual(memory[5].getInt(), 0)
+        self.assertEqual(memory[6].getInt(), 0)
+        self.assertEqual(memory[7].getInt(), 0)
+
+    def test_ildr_mem(self):
+        assembler.firstInstruction = [-1]
+        testString = [
+            'MAIN ILDR r2 r1',
+            'TRP #0'
+        ]
+        memory,_, _, _, error = assembler.assemble(testString)
+        self.assertEqual(error, '')
+        self.assertEqual(memory[0].getInt(), 15)
+        self.assertEqual(memory[1].getInt(), 2)
+        self.assertEqual(memory[2].getInt(), 1)
+        self.assertEqual(memory[3].getInt(), 0)
+        self.assertEqual(memory[4].getInt(), 0)
+        self.assertEqual(memory[5].getInt(), 0)
+        self.assertEqual(memory[6].getInt(), 0)
+
+    def test_istb_mem(self):
+        assembler.firstInstruction = [-1]
+        testString = [
+            'MAIN ISTB r2 r1',
+            'TRP #0'
+        ]
+        memory,_, _, _, error = assembler.assemble(testString)
+        self.assertEqual(error, '')
+        self.assertEqual(memory[0].getInt(), 16)
+        self.assertEqual(memory[1].getInt(), 2)
+        self.assertEqual(memory[2].getInt(), 1)
+        self.assertEqual(memory[3].getInt(), 0)
+        self.assertEqual(memory[4].getInt(), 0)
+        self.assertEqual(memory[5].getInt(), 0)
+        self.assertEqual(memory[6].getInt(), 0)
+
+    def test_ildb_mem(self):
+        assembler.firstInstruction = [-1]
+        testString = [
+            'MAIN ILDB r2 r1',
+            'TRP #0'
+        ]
+        memory,_, _, _, error = assembler.assemble(testString)
+        self.assertEqual(error, '')
+        self.assertEqual(memory[0].getInt(), 17)
+        self.assertEqual(memory[1].getInt(), 2)
+        self.assertEqual(memory[2].getInt(), 1)
+        self.assertEqual(memory[3].getInt(), 0)
+        self.assertEqual(memory[4].getInt(), 0)
+        self.assertEqual(memory[5].getInt(), 0)
+        self.assertEqual(memory[6].getInt(), 0)
+
+    def test_add_mem(self):
+        assembler.firstInstruction = [-1]
+        testString = [
+            'MAIN ADD r2 r1 r3',
+            'TRP #0'
+        ]
+        memory,_, _, _, error = assembler.assemble(testString)
+        self.assertEqual(error, '')
+        self.assertEqual(memory[0].getInt(), 18)
+        self.assertEqual(memory[1].getInt(), 2)
+        self.assertEqual(memory[2].getInt(), 1)
+        self.assertEqual(memory[3].getInt(), 3)
+        self.assertEqual(memory[4].getInt(), 0)
+        self.assertEqual(memory[5].getInt(), 0)
+        self.assertEqual(memory[6].getInt(), 0)
+    
+    def test_addi_mem(self):
+        assembler.firstInstruction = [-1]
+        testString = [
+            'MAIN ADDI r2 r1 #1',
+            'TRP #0'
+        ]
+        memory,_, _, _, error = assembler.assemble(testString)
+        self.assertEqual(error, '')
+        self.assertEqual(memory[0].getInt(), 19)
+        self.assertEqual(memory[1].getInt(), 2)
+        self.assertEqual(memory[2].getInt(), 1)
+        self.assertEqual(memory[3].getInt(), 0)
+        self.assertEqual(memory[4].getInt(), 0)
+        self.assertEqual(memory[5].getInt(), 0)
+        self.assertEqual(memory[6].getInt(), 0)
+        self.assertEqual(memory[7].getInt(), 1)
+
+    def test_sub_mem(self):
+        assembler.firstInstruction = [-1]
+        testString = [
+            'MAIN SUB r2 r1 r3',
+            'TRP #0'
+        ]
+        memory,_, _, _, error = assembler.assemble(testString)
+        self.assertEqual(error, '')
+        self.assertEqual(memory[0].getInt(), 20)
+        self.assertEqual(memory[1].getInt(), 2)
+        self.assertEqual(memory[2].getInt(), 1)
+        self.assertEqual(memory[3].getInt(), 3)
+        self.assertEqual(memory[4].getInt(), 0)
+        self.assertEqual(memory[5].getInt(), 0)
+        self.assertEqual(memory[6].getInt(), 0)
+
+    def test_subi_mem(self):
+        assembler.firstInstruction = [-1]
+        testString = [
+            'MAIN SUBI r2 r1 #1',
+            'TRP #0'
+        ]
+        memory,_, _, _, error = assembler.assemble(testString)
+        self.assertEqual(error, '')
+        self.assertEqual(memory[0].getInt(), 21)
+        self.assertEqual(memory[1].getInt(), 2)
+        self.assertEqual(memory[2].getInt(), 1)
+        self.assertEqual(memory[3].getInt(), 0)
+        self.assertEqual(memory[4].getInt(), 0)
+        self.assertEqual(memory[5].getInt(), 0)
+        self.assertEqual(memory[6].getInt(), 0)
+        self.assertEqual(memory[7].getInt(), 1)
+
+    def test_mul_mem(self):
+        assembler.firstInstruction = [-1]
+        testString = [
+            'MAIN MUL r2 r1 r3',
+            'TRP #0'
+        ]
+        memory,_, _, _, error = assembler.assemble(testString)
+        self.assertEqual(error, '')
+        self.assertEqual(memory[0].getInt(), 22)
+        self.assertEqual(memory[1].getInt(), 2)
+        self.assertEqual(memory[2].getInt(), 1)
+        self.assertEqual(memory[3].getInt(), 3)
+        self.assertEqual(memory[4].getInt(), 0)
+        self.assertEqual(memory[5].getInt(), 0)
+        self.assertEqual(memory[6].getInt(), 0)
+        self.assertEqual(memory[7].getInt(), 0)
+
+    def test_muli_mem(self):
+        assembler.firstInstruction = [-1]
+        testString = [
+            'MAIN MULI r2 r1 #1',
+            'TRP #0'
+        ]
+        memory,_, _, _, error = assembler.assemble(testString)
+        self.assertEqual(error, '')
+        self.assertEqual(memory[0].getInt(), 23)
+        self.assertEqual(memory[1].getInt(), 2)
+        self.assertEqual(memory[2].getInt(), 1)
+        self.assertEqual(memory[3].getInt(), 0)
+        self.assertEqual(memory[4].getInt(), 0)
+        self.assertEqual(memory[5].getInt(), 0)
+        self.assertEqual(memory[6].getInt(), 0)
+        self.assertEqual(memory[7].getInt(), 1)
+        
+    def test_div_mem(self):
+        assembler.firstInstruction = [-1]
+        testString = [
+            'MAIN DIV r2 r1 r3',
+            'TRP #0'
+        ]
+        memory,_, _, _, error = assembler.assemble(testString)
+        self.assertEqual(error, '')
+        self.assertEqual(memory[0].getInt(), 24)
+        self.assertEqual(memory[1].getInt(), 2)
+        self.assertEqual(memory[2].getInt(), 1)
+        self.assertEqual(memory[3].getInt(), 3)
+        self.assertEqual(memory[4].getInt(), 0)
+        self.assertEqual(memory[5].getInt(), 0)
+        self.assertEqual(memory[6].getInt(), 0)
+
+    def test_sdiv_mem(self):
+        assembler.firstInstruction = [-1]
+        testString = [
+            'MAIN SDIV r2 r1 r3',
+            'TRP #0'
+        ]
+        memory,_, _, _, error = assembler.assemble(testString)
+        self.assertEqual(error, '')
+        self.assertEqual(memory[0].getInt(), 25)
+        self.assertEqual(memory[1].getInt(), 2)
+        self.assertEqual(memory[2].getInt(), 1)
+        self.assertEqual(memory[3].getInt(), 3)
+        self.assertEqual(memory[4].getInt(), 0)
+        self.assertEqual(memory[5].getInt(), 0)
+        self.assertEqual(memory[6].getInt(), 0)
+
+    def test_divi_mem(self):
+        assembler.firstInstruction = [-1]
+        testString = [
+            'MAIN DIVI r2 r1 #1',
+            'TRP #0'
+        ]
+        memory,_, _, _, error = assembler.assemble(testString)
+        self.assertEqual(error, '')
+        self.assertEqual(memory[0].getInt(), 26)
+        self.assertEqual(memory[1].getInt(), 2)
+        self.assertEqual(memory[2].getInt(), 1)
+        self.assertEqual(memory[3].getInt(), 0)
+        self.assertEqual(memory[4].getInt(), 0)
+        self.assertEqual(memory[5].getInt(), 0)
+        self.assertEqual(memory[6].getInt(), 0)
+        self.assertEqual(memory[7].getInt(), 1)
+
+    def test_and_mem(self):
+        assembler.firstInstruction = [-1]
+        testString = [
+            'MAIN AND r2 r1 r3',
+            'TRP #0'
+        ]
+        memory,_, _, _, error = assembler.assemble(testString)
+        self.assertEqual(error, '')
+        self.assertEqual(memory[0].getInt(), 27)
+        self.assertEqual(memory[1].getInt(), 2)
+        self.assertEqual(memory[2].getInt(), 1)
+        self.assertEqual(memory[3].getInt(), 3)
+        self.assertEqual(memory[4].getInt(), 0)
+        self.assertEqual(memory[5].getInt(), 0)
+        self.assertEqual(memory[6].getInt(), 0)
+        self.assertEqual(memory[7].getInt(), 0)
+
+    def test_or_mem(self):
+        assembler.firstInstruction = [-1]
+        testString = [
+            'MAIN OR r2 r1 r3',
+            'TRP #0'
+        ]
+        memory,_, _, _, error = assembler.assemble(testString)
+        self.assertEqual(error, '')
+        self.assertEqual(memory[0].getInt(), 28)
+        self.assertEqual(memory[1].getInt(), 2)
+        self.assertEqual(memory[2].getInt(), 1)
+        self.assertEqual(memory[3].getInt(), 3)
+        self.assertEqual(memory[4].getInt(), 0)
+        self.assertEqual(memory[5].getInt(), 0)
+        self.assertEqual(memory[6].getInt(), 0)
+        self.assertEqual(memory[7].getInt(), 0)
+
+    def test_cmp_mem(self):
+        assembler.firstInstruction = [-1]
+        testString = [
+            'MAIN CMP r2 r1 r3',
+            'TRP #0'
+        ]
+        memory,_, _, _, error = assembler.assemble(testString)
+        self.assertEqual(error, '')
+        self.assertEqual(memory[0].getInt(), 29)
+        self.assertEqual(memory[1].getInt(), 2)
+        self.assertEqual(memory[2].getInt(), 1)
+        self.assertEqual(memory[3].getInt(), 3)
+        self.assertEqual(memory[4].getInt(), 0)
+        self.assertEqual(memory[5].getInt(), 0)
+        self.assertEqual(memory[6].getInt(), 0)
+        self.assertEqual(memory[7].getInt(), 0)
+
+    def test_cmpi_mem(self):
+        assembler.firstInstruction = [-1]
+        testString = [
+            'MAIN CMPI r2 r1 #1',
+            'TRP #0'
+        ]
+        memory,_, _, _, error = assembler.assemble(testString)
+        self.assertEqual(error, '')
+        self.assertEqual(memory[0].getInt(), 30)
+        self.assertEqual(memory[1].getInt(), 2)
+        self.assertEqual(memory[2].getInt(), 1)
+        self.assertEqual(memory[3].getInt(), 0)
+        self.assertEqual(memory[4].getInt(), 0)
+        self.assertEqual(memory[5].getInt(), 0)
+        self.assertEqual(memory[6].getInt(), 0)
+        self.assertEqual(memory[7].getInt(), 1)
+
+    def test_trp_mem(self):
+        assembler.firstInstruction = [-1]
+        testString = [
+            'MAIN TRP #1',
+            'TRP #0'
+        ]
+        memory,_, _, _, error = assembler.assemble(testString)
+        self.assertEqual(error, '')
+        self.assertEqual(memory[0].getInt(), 31)
+        self.assertEqual(memory[1].getInt(), 0)
+        self.assertEqual(memory[2].getInt(), 0)
+        self.assertEqual(memory[3].getInt(), 0)
+        self.assertEqual(memory[4].getInt(), 0)
+        self.assertEqual(memory[5].getInt(), 0)
+        self.assertEqual(memory[6].getInt(), 0)
+        self.assertEqual(memory[7].getInt(), 1)
+
+    def test_alci_mem(self):
+        assembler.firstInstruction = [-1]
+        testString = [
+            'MAIN ALCI r1 #3',
+            'TRP #0'
+        ]
+        memory,_, _, _, error = assembler.assemble(testString)
+        self.assertEqual(error, '')
+        self.assertEqual(memory[0].getInt(), 32)
+        self.assertEqual(memory[1].getInt(), 1)
+        self.assertEqual(memory[2].getInt(), 0)
+        self.assertEqual(memory[3].getInt(), 0)
+        self.assertEqual(memory[4].getInt(), 0)
+        self.assertEqual(memory[5].getInt(), 0)
+        self.assertEqual(memory[6].getInt(), 0)
+        self.assertEqual(memory[7].getInt(), 3)
+        assembler.firstInstruction = [-1]
+        testString = [
+            'bad .INT #1',
+            'MAIN ALCI r1 bad',
+            'TRP #0'
+        ]
+        memory,_, _, _, error = assembler.assemble(testString)
+        self.assertNotEqual(error, '')
+
+    def test_allc_mem(self):
+        assembler.firstInstruction = [-1]
+        testString = [
+            '.INT #2',
+            'old .INT #3',
+            'MAIN ALLC r1 old',
+            'TRP #0'
+        ]
+        memory,_, _, _, error = assembler.assemble(testString)
+        self.assertEqual(error, '')
+        self.assertEqual(memory[8].getInt(), 33)
+        self.assertEqual(memory[9].getInt(), 1)
+        self.assertEqual(memory[10].getInt(), 0)
+        self.assertEqual(memory[11].getInt(), 0)
+        self.assertEqual(memory[12].getInt(), 0)
+        self.assertEqual(memory[13].getInt(), 0)
+        self.assertEqual(memory[14].getInt(), 0)
+        self.assertEqual(memory[15].getInt(), 4)
+        assembler.firstInstruction = [-1]
+        testString = [
+            'bad .INT #1',
+            'MAIN ALLC r1 #5',
+            'TRP #0'
+        ]
+        memory,_, _, _, error = assembler.assemble(testString)
+        self.assertNotEqual(error, '')
+
+    def test_iallc_mem(self):
+        assembler.firstInstruction = [-1]
+        testString = [
+            'MAIN IALLC r1 r3',
+            'TRP #0'
+        ]
+        memory,_, _, _, error = assembler.assemble(testString)
+        self.assertEqual(error, '')
+        self.assertEqual(memory[0].getInt(), 34)
+        self.assertEqual(memory[1].getInt(), 1)
+        self.assertEqual(memory[2].getInt(), 3)
+        self.assertEqual(memory[3].getInt(), 0)
+        self.assertEqual(memory[4].getInt(), 0)
+        self.assertEqual(memory[5].getInt(), 0)
+        self.assertEqual(memory[6].getInt(), 0)
+        self.assertEqual(memory[7].getInt(), 0)
+        assembler.firstInstruction = [-1]
+        testString = [
+            'bad .INT #1',
+            'MAIN IALLC r1 #5',
+            'TRP #0'
+        ]
+        memory,_, _, _, error = assembler.assemble(testString)
+        self.assertNotEqual(error, '')
+
+    def test_pshr_mem(self):
+        assembler.firstInstruction = [-1]
+        testString = [
+            'MAIN PSHR r1',
+            'TRP #0'
+        ]
+        memory,_, _, _, error = assembler.assemble(testString)
+        self.assertEqual(error, '')
+        self.assertEqual(memory[0].getInt(), 35)
+        self.assertEqual(memory[1].getInt(), 1)
+        self.assertEqual(memory[2].getInt(), 0)
+        self.assertEqual(memory[3].getInt(), 0)
+        self.assertEqual(memory[4].getInt(), 0)
+        self.assertEqual(memory[5].getInt(), 0)
+        self.assertEqual(memory[6].getInt(), 0)
+        self.assertEqual(memory[7].getInt(), 0)
+        assembler.firstInstruction = [-1]
+        testString = [
+            'MAIN PSHR #3 r2',
+            'TRP #0'
+        ]
+        memory,_, _, _, error = assembler.assemble(testString)
+        self.assertNotEqual(error, '')
+
+    def test_pshb_mem(self):
+        assembler.firstInstruction = [-1]
+        testString = [
+            'MAIN PSHB r1',
+            'TRP #0'
+        ]
+        memory,_, _, _, error = assembler.assemble(testString)
+        self.assertEqual(error, '')
+        self.assertEqual(memory[0].getInt(), 36)
+        self.assertEqual(memory[1].getInt(), 1)
+        self.assertEqual(memory[2].getInt(), 0)
+        self.assertEqual(memory[3].getInt(), 0)
+        self.assertEqual(memory[4].getInt(), 0)
+        self.assertEqual(memory[5].getInt(), 0)
+        self.assertEqual(memory[6].getInt(), 0)
+        self.assertEqual(memory[7].getInt(), 0)
+        assembler.firstInstruction = [-1]
+        testString = [
+            'MAIN PSHB #3 r2',
+            'TRP #0'
+        ]
+        memory,_, _, _, error = assembler.assemble(testString)
+        self.assertNotEqual(error, '')
+
+    def test_popr_mem(self):
+        assembler.firstInstruction = [-1]
+        testString = [
+            'MAIN POPR r1',
+            'TRP #0'
+        ]
+        memory,_, _, _, error = assembler.assemble(testString)
+        self.assertEqual(error, '')
+        self.assertEqual(memory[0].getInt(), 37)
+        self.assertEqual(memory[1].getInt(), 1)
+        self.assertEqual(memory[2].getInt(), 0)
+        self.assertEqual(memory[3].getInt(), 0)
+        self.assertEqual(memory[4].getInt(), 0)
+        self.assertEqual(memory[5].getInt(), 0)
+        self.assertEqual(memory[6].getInt(), 0)
+        self.assertEqual(memory[7].getInt(), 0)
+        assembler.firstInstruction = [-1]
+        testString = [
+            'MAIN POPR #3 r2',
+            'TRP #0'
+        ]
+        memory,_, _, _, error = assembler.assemble(testString)
+        self.assertNotEqual(error, '')
+
+    def test_popb_mem(self):
+        assembler.firstInstruction = [-1]
+        testString = [
+            'MAIN POPB r1',
+            'TRP #0'
+        ]
+        memory,_, _, _, error = assembler.assemble(testString)
+        self.assertEqual(error, '')
+        self.assertEqual(memory[0].getInt(), 38)
+        self.assertEqual(memory[1].getInt(), 1)
+        self.assertEqual(memory[2].getInt(), 0)
+        self.assertEqual(memory[3].getInt(), 0)
+        self.assertEqual(memory[4].getInt(), 0)
+        self.assertEqual(memory[5].getInt(), 0)
+        self.assertEqual(memory[6].getInt(), 0)
+        self.assertEqual(memory[7].getInt(), 0)
+        assembler.firstInstruction = [-1]
+        testString = [
+            'MAIN POPB #3 r2',
+            'TRP #0'
+        ]
+        memory,_, _, _, error = assembler.assemble(testString)
+        self.assertNotEqual(error, '')
+
+    def test_call(self):
+        assembler.firstInstruction = [-1]
+        testString = [
+            'MAIN CALL end',
+            'end TRP #0'
+        ]
+        memory,_, _, _, error = assembler.assemble(testString)
+        self.assertEqual(error, '')
+        self.assertEqual(memory[0].getInt(), 39)
+        self.assertEqual(memory[1].getInt(), 0)
+        self.assertEqual(memory[2].getInt(), 0)
+        self.assertEqual(memory[3].getInt(), 0)
+        self.assertEqual(memory[4].getInt(), 0)
+        self.assertEqual(memory[5].getInt(), 0)
+        self.assertEqual(memory[6].getInt(), 0)
+        self.assertEqual(memory[7].getInt(), 8)
+        assembler.firstInstruction = [-1]
+        testString = [
+            'MAIN CALL r2',
+            'TRP #0'
+        ]
+        memory,_, _, _, error = assembler.assemble(testString)
+        self.assertNotEqual(error, '')
+
+    def test_ret_mem(self):
+        assembler.firstInstruction = [-1]
+        testString = [
+            'MAIN RET',
+            'TRP #0'
+        ]
+        memory,_, _, _, error = assembler.assemble(testString)
+        self.assertEqual(error, '')
+        self.assertEqual(memory[0].getInt(), 40)
+        self.assertEqual(memory[1].getInt(), 0)
+        self.assertEqual(memory[2].getInt(), 0)
+        self.assertEqual(memory[3].getInt(), 0)
+        self.assertEqual(memory[4].getInt(), 0)
+        self.assertEqual(memory[5].getInt(), 0)
+        self.assertEqual(memory[6].getInt(), 0)
+        self.assertEqual(memory[7].getInt(), 0)
+        assembler.firstInstruction = [-1]
+        testString = [
+            'MAIN RET r2',
+            'TRP #0'
+        ]
 
 if __name__ == '__main__':
     t = TestAssembler()
-    t.test_brz_mem()
+    t.test_pshr_mem()
+    # ml = [func for func in dir(TestAssembler) if callable(getattr(TestAssembler, func)) and func.startswith('test_')]
+    # for func in ml:
+    #     print(func)
+    #     eval(f't.{func}()')

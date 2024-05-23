@@ -159,13 +159,18 @@ def makeBinary(value, bits=32):
     return value
 
 def litBreak(value):
-    if type(value)==int:
-        destination = bin(value).replace('0b','').zfill(32)
-        one = destination[:8]
-        two = destination[8:16]
-        three = destination[16:24]
-        four = destination[24:]
-        return [one,two,three,four]
+    if type(value)==str:
+        if value[0]=='#':
+            value = int(value[1:])
+        else:
+            value = int(ord(value[1]))
+    destination = makeBinary(value)
+    one = destination[:8]
+    two = destination[8:16]
+    three = destination[16:24]
+    four = destination[24:]
+    return [one,two,three,four]
+        
 
 
 def addInstruction(mem,vals):
@@ -211,7 +216,7 @@ def tokenify(lines):
     # Directives and label dictionary
     for l in lines:
         line = shlex.split(l, posix=False)
-        if (label := re.search("^[a-zA-Z0-9][a-zA-Z0-9_]*", line[0])) and line[0] not in instructions.__members__:
+        if (label := re.search("^[a-zA-Z0-9][a-zA-Z0-9_]*", line[0])) and line[0].upper() not in instructions.__members__:
             label = label[0]
             if len(line) < 2:
                 error+='Invalid syntax in "' + l + '"  labels cannot be on otherwise empty line.\n'
@@ -336,7 +341,7 @@ def assemble(lines):
                 case "BNZ" | "BGT" | "BLT" | "BRZ":                                 # register | label
                     if not isRegister(oline,operand1) or not isLabel(oline, operand2, labels):
                         error += operator + ' operator must be followed by a register then a label.\n'
-                case 'MOV' | 'MUL' | 'IALLC' | 'ISTR' | 'ISTB' | 'ILDB' | 'ILDR':   # register | register 
+                case 'MOV' | 'IALLC' | 'ISTR' | 'ISTB' | 'ILDB' | 'ILDR':   # register | register 
                     if not isRegister(oline,operand1) or not isRegister(oline,operand2):
                         error += operator + ' must be followed by two registers.\n'
                 case 'ADD' | 'SUB' | 'MUL' | 'DIV' | 'SDIV' | 'AND' | 'OR' | 'CMP': # register | register | register
@@ -357,9 +362,13 @@ def assemble(lines):
                 case 'CALL':                                                        # label
                     if not isLabel(oline, operand1, labels):
                         error += operator + ' must be followed by a label.\n'
+            if error:
+                return [],[],[],{}, error
+        
     # Build Memory
     memory = []
     for (oline,sline) in zip(olines,slines):
+
         label, operator, operand1, operand2, operand3 = sline
         match operator:
             case '.INT':
@@ -394,10 +403,28 @@ def assemble(lines):
                     memory.append(address.Address())
             case 'JMP':
                 addInstruction(memory,[1,0,0,0] + litBreak(labels[operand1]))
-            case 'JMR':
-                addInstruction(memory,[2,int(operand1[1:]),0,0] + litBreak(0))
-            case 'BNZ' | 'BGT' | 'BLT' | 'BRZ':
-                addInstruction(memory,[instructions.get(operator),int(operand1[1:]),0,0] + litBreak(labels[operand2]))
+            case 'JMR'| 'PSHR' | 'PSHB' | 'POPR' | 'POPB':                                                                                  # Integer
+                addInstruction(memory,[instructions.get(operator),int(operand1[1:]),0,0] + litBreak(0))                         
+            case 'BNZ' | 'BGT' | 'BLT' | 'BRZ':                                                                                             # Integer | label
+                addInstruction(memory,[instructions.get(operator),int(operand1[1:]),0,0] + litBreak(labels[operand2]))          
+            case 'MOV' | 'IALLC' | 'ISTR' | 'ISTB' | 'ILDB' | 'ILDR':                                                                       # Register, Register
+                addInstruction(memory,[instructions.get(operator),int(operand1[1:]),int(operand2[1:]),0] + litBreak(0))            
+            case 'MOVI' | 'ALCI':                                                                                                           # Register | Num
+                addInstruction(memory,[instructions.get(operator),int(operand1[1:]),0,0] + litBreak(operand2))         
+            case 'STR' | 'LDR' | 'LDB' | 'STB' | 'LDA' | 'ALLC':                                                                            # Register | label
+                addInstruction(memory,[instructions.get(operator),int(operand1[1:]),0,0] + litBreak(labels[operand2]))            
+            case 'ADDI' | 'MULI' | 'DIVI' |  'CMPI' | 'SUBI':                                                                               # register, register | Num
+                addInstruction(memory,[instructions.get(operator),int(operand1[1:]),int(operand2[1:]),0] + litBreak(operand3))
+            case 'ADD' | 'SUB' | 'MUL' | 'DIV' | 'SDIV' | 'AND' | 'OR' | 'CMP':                                                             # register, register, register
+                addInstruction(memory,[instructions.get(operator),int(operand1[1:]),int(operand2[1:]),int(operand3[1:])] + litBreak(0))     
+            case 'TRP':                                                                                                                    # |Integer
+                addInstruction(memory,[instructions.get(operator),0,0,0] + litBreak(operand1))
+            case 'CALL':                                                                                                                   # label
+                addInstruction(memory,[instructions.get(operator),0,0,0] + litBreak(labels[operand1]))
+            case 'RET':                                                                                                                    # |
+                addInstruction(memory,[instructions.get(operator),0,0,0] + litBreak(0))
+
+            
     return (memory,olines, slines, labels, error)
 
 def main():

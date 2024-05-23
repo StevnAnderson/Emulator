@@ -31,7 +31,7 @@ class Address:
 
     def getInt(self):
         if self.value[0] == '1':
-            return (int(self.value,2) - (1 << self.bits))
+            return (int(self.value,2) - (1 << self.nbits))
         else:
             return int(self.value, 2)
 
