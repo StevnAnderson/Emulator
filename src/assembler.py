@@ -417,8 +417,17 @@ def assemble(lines):
             case 'RET':                                                                                                                    # |
                 addInstruction(memory,[instructions.get(operator),0,0,0] + litBreak(0))
 
-            
+    registers[pc] = firstInstruction
+    registers[sb] = len(memory)
+    registers[sp] = len(memory)
+    registers[hp] = 
     return (memory,olines, slines, labels, error)
+
+def emulate(memory, labels):
+    error = ''
+    for m in memory:
+        pass
+    return (memory, error)
 
 def main():
     if len(sys.argv) < 2:
@@ -434,7 +443,6 @@ def main():
         sys.stderr.write(error)
         return error
 
-    [print(m.get()) for m in memory]
-
+    memory, error = emulate(memory,labels)
 if __name__ == "__main__":
     main()
