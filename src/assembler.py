@@ -30,38 +30,124 @@ class instructions(Enum):
     BLT = 5
     BRZ = 6
     MOV = 7
-    LDA = 8
-    STR = 9
-    LDR = 10
-    STB = 11
-    LDB = 12
-    ADD = 13
-    ADDI = 14
-    SUB = 15
-    MUL = 16
-    DIV = 17
-    AND = 18
-    OR = 19
-    CMP = 20
-    TRP = 21
-    ISTR = 22
-    ILDR = 23
-    ISTB = 24
-    ILDB = 25
-    MOVI = 31
-    CMPI = 32
-    MULI = 33
-    DIVI = 34
-    ALCI = 35
-    ALLC = 36
-    IALLC = 37
-    SDIV = 38
-    PSHR = 40
-    PSHB = 41
-    POPR = 42
-    POPB = 43
-    CALL = 44
-    RET = 45
+    MOVI = 8
+    LDA = 9
+    STR = 10
+    LDR = 11
+    STB = 12
+    LDB = 13
+    ISTR = 14
+    ILDR = 15
+    ISTB = 16
+    ILDB = 17
+    ADD = 18
+    ADDI = 19
+    SUB = 20
+    SUBI = 21
+    MUL = 22
+    MULI = 23
+    DIV = 24
+    SDIV = 25
+    DIVI = 26
+    AND = 27
+    OR = 28
+    CMP = 29
+    CMPI = 30
+    TRP = 31
+    ALCI = 32
+    ALLC = 33
+    IALLC = 34
+    PSHR = 35
+    PSHB = 36
+    POPR = 37
+    POPB = 38
+    CALL = 39
+    RET = 40
+
+    def get(val):
+        match val:
+            case 'JMP':
+                return 1
+            case 'JMR':
+                return 2
+            case 'BNZ':
+                return 3
+            case 'BGT':
+                return 4
+            case 'BLT':
+                return 5
+            case 'BRZ':
+                return 6
+            case 'MOV':
+                return 7
+            case 'MOVI':
+                return 8
+            case 'LDA':
+                return 9
+            case 'STR':
+                return 10
+            case 'LDR':
+                return 11
+            case 'STB':
+                return 12
+            case 'LDB':
+                return 13
+            case 'ISTR':
+                return 14
+            case 'ILDR':
+                return 15
+            case 'ISTB':
+                return 16
+            case 'ILDB':
+                return 17
+            case 'ADD':
+                return 18
+            case 'ADDI':
+                return 19
+            case 'SUB':
+                return 20
+            case 'SUBI':
+                return 21
+            case 'MUL':
+                return 22
+            case 'MULI':
+                return 23
+            case 'DIV':
+                return 24
+            case 'SDIV':
+                return 25
+            case 'DIVI':
+                return 26
+            case 'AND':
+                return 27
+            case 'OR':
+                return 28
+            case 'CMP':
+                return 29
+            case 'CMPI':
+                return 30
+            case 'TRP':
+                return 31
+            case 'ALCI':
+                return 32
+            case 'ALLC':
+                return 33
+            case 'IALLC':
+                return 34
+            case 'PSHR':
+                return 35
+            case 'PSHB':
+                return 36
+            case 'POPR':
+                return 37
+            case 'POPB':
+                return 38
+            case 'CALL':
+                return 39
+            case 'RET':
+                return 40
+            case _:
+                return 0
 
 def makeBinary(value, bits=32):
     if value < 0:
@@ -72,54 +158,64 @@ def makeBinary(value, bits=32):
         value = ('{0:0' + str(bits) + 'b}').format(value)
     return value
 
+def litBreak(value):
+    if type(value)==int:
+        destination = bin(value).replace('0b','').zfill(32)
+        one = destination[:8]
+        two = destination[8:16]
+        three = destination[16:24]
+        four = destination[24:]
+        return [one,two,three,four]
 
+
+def addInstruction(mem,vals):
+    for i in range(8):
+        mem.append(address.Address())
+        mem[-1].set(vals[i])
+        
 def toCode(line):
     if firstInstruction[0] == -1:
         firstInstruction[0] = line
     
 def labelIsInstruction(l, label, labels, error):
     if labels[label] < firstInstruction[0]:
-        return 'Invalid syntax in "' + l + '" ' + label +' cannot jump to directives.\n'
-    return ''
+        return False
+    return True
 
 def labelIsDirective(l, label, labels):
     if labels[label] >= firstInstruction:
-        return 'Invalid syntax in "' + l + '" ' + label +' cannot jump to instructions.\n'
-    return ''
+        return False
+    return True
         
 def isRegister(l, name):
     if not name or name[0].upper() != 'R' or name.upper() not in registers:
-        return 'Invalid syntax in "' + l + '" ' + name +' instruction must have a valid register as operand1 operand.\n'
-    return ''
+        return False
+    return True
 
 def isLabel(l, name, labels):
     if not name or name not in labels:
-        return 'Invalid syntax in "' + l + '" ' + name +' instruction must have a valid label as operand1 operand.\n'
-    return ''
+        return False
+    return True
 
 def isInteger(l, name):
     if not name or name[0] != '#' or not name[1:].lstrip('-').isdigit():
-        return 'Invalid syntax in "' + l + '" ' + name +' INT data must have pound then number as operand1 operand.example: ".INT #-12" \n'
-    return ''
+        return False
+    return True
 
 def tokenify(lines):
     error = ''
     oLines = lines
     oLines = [o.split(';')[0] for o in oLines if o.split(';')[0].strip()]
     lines = [l.split(';')[0] for l in lines if l.split(';')[0].strip()]
-    labels = {}
     retlines = []
     # Directives and label dictionary
-    for i,l in enumerate(lines):
+    for l in lines:
         line = shlex.split(l, posix=False)
         if (label := re.search("^[a-zA-Z0-9][a-zA-Z0-9_]*", line[0])) and line[0] not in instructions.__members__:
             label = label[0]
             if len(line) < 2:
                 error+='Invalid syntax in "' + l + '"  labels cannot be on otherwise empty line.\n'
                 continue
-            if label in labels:
-                error+='Invalid syntax in "' + l + '"  label "' + label + '" already used.\n'
-            labels[label] = i+1
             operator = line[1].upper()
             if len(line) > 2:
                 if line[2] in registers:
@@ -128,13 +224,20 @@ def tokenify(lines):
                     operand1 = line[2] if line[2][0] != "'" else line[2]
             else:
                 operand1 = None
-            if len(line)>=4:
+            if len(line)>3:
                 if line[3] in registers:
                     operand2 = line[3].upper() if line[3][0] != "'" else line[3]
                 else:
                     operand2 = line[3] if line[3][0] != "'" else line[3]
             else:
                 operand2 = None
+            if len(line) > 4:
+                if line[4] in registers:
+                    operand3 = line[4].upper() if line[4][0] != "'" else line[4]
+                else:
+                    operand3 = line[4] if line[4][0] != "'" else line[4]
+            else:
+                operand3 = None
         else:
             label = None
             operator = line[0].upper()
@@ -152,24 +255,35 @@ def tokenify(lines):
                     operand2 = line[2] if line[2][0] != "'" else line[2]
             else:
                 operand2 = None
-        retlines.append([label, operator, operand1, operand2])
-    return [oLines, retlines, labels, error]
+            if len(line)>3:
+                if line[3] in registers:
+                    operand3 = line[3].upper() if line[3][0] != "'" else line[3]
+                else:
+                    operand3 = line[3] if line[3][0] != "'" else line[3]
+            else:
+                operand3 = None
+        retlines.append([label, operator, operand1, operand2, operand3])
+    return [oLines, retlines, error]
         
 def assemble(lines):
-    olines,slines, labels, error = tokenify(lines)
+    olines,slines, error = tokenify(lines)
     if error:
-        sys.stderr.write(error)
-        exit(1)
-    # Directive 
-    for i,(l,line) in enumerate(zip(lines,slines)):
-        _, operator, operand1, operand2 = line
+        return [],[],[],{}, error
+    # Directive and labels
+    labels = {}
+    lineNo = 0
+    for l,line in zip(lines,slines):
+        label, operator, operand1, operand2, operand3 = line
+        if label: 
+             labels[label] = lineNo
         if operator[0] == '.' and operator[1:] in directives.__members__:
             if firstInstruction[0]!=-1:
-                print(firstInstruction)
                 error+='"' + l + '" not in data section...\n'
             match operator[1:]:
                 case "INT":
-                    error += isInteger(l, operand1)
+                    if not isInteger(l, operand1):
+                        error+='Invalid syntax in "' + l + '"  INT data must be a number. example: ".INT #12"\n'
+                    lineNo+=3
                 case "BYT":
                     if operand1:
                         if operand1[0] != "'" and operand1[0] != "#":
@@ -185,6 +299,8 @@ def assemble(lines):
                 case "BTS":
                     if not operand1 or operand1[0] != '#' or not operand1[1:].isdigit():
                         error+='Invalid syntax in "' + l + '"  BTS data must have pound then an unsigned number as operand1 operand. example: ".BTS #12"\n'
+                        return [],[],[],{}, error
+                    lineNo+=int(operand1[1:])-1
                 case "STR":
                     if not operand1:
                         error+='Invalid syntax in "' + l + '"  STR data must have string or string length as operand1 operand. examples: ".STR \'hello\'", ".STR #12"\n'
@@ -196,47 +312,55 @@ def assemble(lines):
                             error+='Invalid syntax in "' + l + '"  STR data must be string in double quotes. examples: ".STR "hello""\n'
                     else:
                         error+='Invalid syntax in "' + l + '"  STR data operand must be string or string length. examples: ".STR "hello"", ".STR #12"\n'
+                    lineNo+=len(operand1)-1
         if operator in instructions.__members__:
-            toCode( i +1)
+            toCode( lineNo +1)
+            lineNo+=7
+        lineNo+=1
     if 'MAIN' not in labels:
         error+='Invalid syntax in "' + l + '"  MAIN instruction missing.\n'
     # Instruction
     if error:
-        sys.stderr.write(error)
+        # sys.stderr.write(error)
         return None, olines, slines, labels, error
     for (oline,sline) in zip(olines,slines):
-        _, operator, operand1, operand2 = sline
+        _, operator, operand1, operand2, operand3 = sline
         if operator in instructions.__members__:
             match operator:
-                case "JMP":
-                    error += isLabel(l, operand1, labels)
-                    error += labelIsInstruction(l, operand1, labels, error)
-                case "JMR" | 'PSHR' | 'PSHB' | 'POPR' | 'POPB':                                              # register
-                    isRegister(l,operand1)
-                case "BNZ" | "BGT" | "BLT" | "BRZ":                                                          # register | label to instruction
-                    error += isRegister(l,operand1)
-                    error += isLabel(l, operand2, labels)
-                    error += labelIsInstruction(l,operand2, labels,error)
-                case 'MOV' | 'ADD' | 'SUB' | 'MUL' | 'DIV' | 'AND' | 'OR' | 'CMP' | 'SDIV' | 'IALLC' | 'ISTR' | 'ISTB' | 'ILDB':        # register | register
-                    error += isRegister(l,operand1)
-                    error += isRegister(l,operand2)
-                case 'ADDI' | 'MOVI' | 'MULI' | 'DIVI' |  'CMPI' | 'ALCI':                                    # register | integer
-                    error += isRegister(l,operand1)
-                    isInteger(l, operand2)
-                case 'TRP':                                                                                  # integer
-                    error += isInteger(l, operand1)
-                case 'STR' | 'LDR' | 'LDB' | 'STB' | 'LDA' | 'ALLC':                                         # register | label
-                    error += isRegister(l,operand1)
-                    error += isLabel(l, operand2, labels)
-                case 'CALL':
-                    error += isLabel(l, operand1, labels)
+                case "JMP":                                                         #  label
+                    if not isLabel(oline, operand1, labels):
+                        error += operator + ' operator must be followed by label.\n'
+                case "JMR" | 'PSHR' | 'PSHB' | 'POPR' | 'POPB':                     # register 
+                    if not isRegister(oline,operand1):
+                        error += operator + ' operator must be followed by register.\n'
+                case "BNZ" | "BGT" | "BLT" | "BRZ":                                 # register | label
+                    if not isRegister(oline,operand1) or not isLabel(oline, operand2, labels):
+                        error += operator + ' operator must be followed by a register then a label.\n'
+                case 'MOV' | 'MUL' | 'IALLC' | 'ISTR' | 'ISTB' | 'ILDB' | 'ILDR':   # register | register 
+                    if not isRegister(oline,operand1) or not isRegister(oline,operand2):
+                        error += operator + ' must be followed by two registers.\n'
+                case 'ADD' | 'SUB' | 'MUL' | 'DIV' | 'SDIV' | 'AND' | 'OR' | 'CMP': # register | register | register
+                    if not isRegister(oline,operand1) or not isRegister(oline,operand2) or not isRegister(oline, operand3):
+                        error += operator + ' must be followed by three registers.\n'
+                case 'ADDI' | 'MULI' | 'DIVI' |  'CMPI' | 'SUBI':                   # register | register | Num
+                    if not isRegister(oline,operand1) or not isRegister(oline,operand2) or not isInteger(oline, operand3):
+                        error += operator + ' must be followed by two registers and a number.\n'
+                case 'TRP':                                                         # integer
+                    if not isInteger(oline, operand1):
+                        error += operator + ' must be followed by a number.\n'
+                case 'STR' | 'LDR' | 'LDB' | 'STB' | 'LDA' | 'ALLC':                # register label
+                    if not isRegister(oline,operand1) or not isLabel(oline, operand2, labels):
+                        error += operator + ' must be followed by a register and a label.\n'
+                case 'MOVI' | 'ALCI':                                               # register | Num
+                    if not isRegister(oline,operand1) or not isInteger(oline, operand2):
+                        error += operator + ' must be followed by a register and a number.\n'
+                case 'CALL':                                                        # label
+                    if not isLabel(oline, operand1, labels):
+                        error += operator + ' must be followed by a label.\n'
     # Build Memory
     memory = []
-    labels = {}
     for (oline,sline) in zip(olines,slines):
-        label, operator, operand1, operand2 = sline
-        if label:
-            labels[label] = len(memory)
+        label, operator, operand1, operand2, operand3 = sline
         match operator:
             case '.INT':
                 binary = makeBinary(int(operand1[1:]))
@@ -269,9 +393,11 @@ def assemble(lines):
                 for n in range(int(operand1[1:])):
                     memory.append(address.Address())
             case 'JMP':
-                memory.append(address.Address())
-                memory[-1].set(1)
-                for n in range(3): memory.append(address.Address())
+                addInstruction(memory,[1,0,0,0] + litBreak(labels[operand1]))
+            case 'JMR':
+                addInstruction(memory,[2,int(operand1[1:]),0,0] + litBreak(0))
+            case 'BNZ' | 'BGT' | 'BLT' | 'BRZ':
+                addInstruction(memory,[instructions.get(operator),int(operand1[1:]),0,0] + litBreak(labels[operand2]))
     return (memory,olines, slines, labels, error)
 
 def main():
@@ -284,7 +410,6 @@ def main():
 
     memory, olines, slines, labels, error = assemble(lines)
     if error:
-        print(error)
         sys.stderr.write(error)
         return error
     

@@ -15,7 +15,7 @@ class Address:
                         value = value - (1 << self.nbits)
                     self.value = ('{0:0' + str(self.nbits) + 'b}').format(value)
             elif type(value) == str:
-                self.setByte(3, ord(value))
+                self.set(value, True)
         else:
             if type(value) == str:
                 if [x for x in value if x != '0' and x != '1']:

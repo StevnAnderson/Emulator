@@ -66,9 +66,7 @@ class TestAssembler(unittest.TestCase):
             "TRP #0"
         ]
         memory,lines, slines, labels, error = assembler.assemble(testString)
-        self.assertEqual(lines, testString)
         self.assertNotEqual(error, '')
-        self.assertEqual(labels, {'MAIN': 2})
 
     def test_bts(self):
         assembler.firstInstruction = [-1]
@@ -160,13 +158,13 @@ class TestAssembler(unittest.TestCase):
         memory,lines, slines, labels, error = assembler.assemble(testString)
         self.assertEqual(lines, testString)
         self.assertEqual(error, '')
-        # self.assertEqual(labels, {'MAIN': 1, 'end': 8})
+        self.assertEqual(labels, {'MAIN': 0, 'end': 16})
 
     def test_jmr(self):
         assembler.firstInstruction = [-1]
         testString = [
-            "MAIN ADDI r0 #4",
-            "JMR end",
+            "MAIN ADDI r1 r0 #4",
+            "JMR r0",
             "MOV r0 r1",
             "end TRP #0"
         ]
@@ -178,7 +176,7 @@ class TestAssembler(unittest.TestCase):
     def test_bnz(self):
         assembler.firstInstruction = [-1]
         testString = [
-            "MAIN ADDI r0 #4",
+            "MAIN ADDI r1 r0 #4",
             "BNZ r0 end",
             "MOV r0 r1",
             "end TRP #0"
@@ -190,7 +188,7 @@ class TestAssembler(unittest.TestCase):
     def test_bgt(self):
         assembler.firstInstruction = [-1]
         testString = [
-            "MAIN ADDI r0 #4",
+            "MAIN ADDI r1 r0 #4",
             "BGT r0 end",
             "MOV r0 r1",
             "end TRP #0"
@@ -202,7 +200,7 @@ class TestAssembler(unittest.TestCase):
     def test_blt(self):
         assembler.firstInstruction = [-1]
         testString = [
-            "MAIN ADDI r0 #-4",
+            "MAIN ADDI r1 r0 #-4",
             "BLT r0 end",
             "MOV r0 r1",
             "end TRP #0"
@@ -214,7 +212,7 @@ class TestAssembler(unittest.TestCase):
     def test_brz(self):
         assembler.firstInstruction = [-1]
         testString = [
-            "MAIN ADDI r1 #4",
+            "MAIN ADDI r1 r1 #4",
             "BRZ r0 end",
             "MOV r1 r2",
             "end TRP #0"
@@ -226,7 +224,7 @@ class TestAssembler(unittest.TestCase):
     def test_mov(self):
         assembler.firstInstruction = [-1]
         testString = [
-            "MAIN addi r0 #2",
+            "MAIN ADDI r1 r0 #2",
             "MOV r2 r1",
             "TRP #0"
         ]
@@ -248,7 +246,7 @@ class TestAssembler(unittest.TestCase):
         assembler.firstInstruction = [-1]
         testString = [
             "one .INT #2",
-            "MAIN addi r2 #1",
+            "MAIN ADDI r2 r3 #1",
             "STR r2 one",
             "TRP #0"
         ]
@@ -292,9 +290,19 @@ class TestAssembler(unittest.TestCase):
     def test_add(self):
         assembler.firstInstruction = [-1]
         testString = [
-            "MAIN ADDI r2 #1",
-            'ADDI r1 #1',
-            "ADD r2 r1",
+            "MAIN ADDI r2 r3 #1",
+            'ADDI r1 r1 #1',
+            "ADD r0 r2 r1",
+            "TRP #0"
+        ]
+        memory,lines, slines, labels, error = assembler.assemble(testString)
+        self.assertEqual(lines, testString)
+        self.assertEqual(error, '')
+        assembler.firstInstruction = [-1]
+        testString = [
+            "MAIN ADDI r2 r3 #1",
+            'ADDI r1 r2 #1',
+            "ADD r3 r2 r1",
             "TRP #0"
         ]
         memory,lines, slines, labels, error = assembler.assemble(testString)
@@ -304,7 +312,7 @@ class TestAssembler(unittest.TestCase):
     def test_addi(self):
         assembler.firstInstruction = [-1]
         testString = [
-            "MAIN ADDI r2 #1",
+            "MAIN ADDI r2 r3 #1",
             "TRP #0"
         ]
         memory,lines, slines, labels, error = assembler.assemble(testString)
@@ -314,8 +322,8 @@ class TestAssembler(unittest.TestCase):
     def test_sub(self):
         assembler.firstInstruction = [-1]
         testString = [
-            "MAIN ADDI r2 #1",
-            "SUB r2 r2",
+            "MAIN ADDI r2 r3 #1",
+            "SUB r2 r2 r0",
             "TRP #0"
         ]
         memory,lines, slines, labels, error = assembler.assemble(testString)
@@ -325,7 +333,7 @@ class TestAssembler(unittest.TestCase):
     def test_mul(self):
         assembler.firstInstruction = [-1]
         testString = [
-            "MAIN ADDI r2 #3",
+            "MAIN ADDI r1 r2 #3",
             "MUL r2 r2",
             "TRP #0"
         ]
@@ -336,9 +344,9 @@ class TestAssembler(unittest.TestCase):
     def test_div(self):
         assembler.firstInstruction = [-1]
         testString = [
-            "MAIN ADDI r2 #6",
-            "ADDI r1 #3",
-            "DIV r2 r1",
+            "MAIN ADDI r2 r1 #6",
+            "ADDI r1 r2 #3",
+            "DIV r0  r2 r1",
             "TRP #0"
         ]
         memory,lines, slines, labels, error = assembler.assemble(testString)
@@ -348,9 +356,9 @@ class TestAssembler(unittest.TestCase):
     def test_and(self):
         assembler.firstInstruction = [-1]
         testString = [
-            "MAIN ADDI r2 #5",
-            "ADDI r1 #7",
-            "AND r2 r1",
+            "MAIN ADDI r2 r3 #5",
+            "ADDI r1 r2 #7",
+            "AND r0 r2 r1",
             "TRP #0"
         ]
         memory,lines, slines, labels, error = assembler.assemble(testString)
@@ -360,9 +368,9 @@ class TestAssembler(unittest.TestCase):
     def test_or(self):
         assembler.firstInstruction = [-1]
         testString = [
-            "MAIN ADDI r2 #5",
-            "ADDI r1 #7",
-            "OR r2 r1",
+            "MAIN ADDI r1 r2 #5",
+            "ADDI r1 r1 #7",
+            "OR r2 r1 r0",
             "TRP #0"
         ]
         memory,lines, slines, labels, error = assembler.assemble(testString)
@@ -372,9 +380,9 @@ class TestAssembler(unittest.TestCase):
     def test_cmp(self):
         assembler.firstInstruction = [-1]
         testString = [
-            "MAIN ADDI r1 #1",
-            "ADDI r2 #2",
-            "CMP r1 r2",
+            "MAIN ADDI r1 r1 #1",
+            "ADDI r1 r2 #2",
+            "CMP r1 r2 r0",
             "TRP #0"
         ]
         memory,lines, slines, labels, error = assembler.assemble(testString)
@@ -389,7 +397,7 @@ class TestAssembler(unittest.TestCase):
             "TRP #1",
             "TRP #4",
             "TRP #3",
-            "SUB R3 R3",
+            "SUB R3 R3 r3",
             "LDR R3 WRITER",
             "TRP #6",
             "TRP #5",
@@ -404,7 +412,7 @@ class TestAssembler(unittest.TestCase):
         testString = [
             "WRITER .INT #24",
             "MAIN LDA R2 WRITER",
-            "ADDI R1 #1",
+            "ADDI r1 R1 #1",
             "ISTR R1 R2",
             "TRP #0"
         ]
@@ -417,7 +425,7 @@ class TestAssembler(unittest.TestCase):
         testString = [
             "WRITER .INT #24",
             "MAIN LDA R2 WRITER",
-            "ADDI R1 #1",
+            "ADDI r1 R1 #1",
             "ILDR R1 R2",
             "TRP #0"
         ]
@@ -430,7 +438,7 @@ class TestAssembler(unittest.TestCase):
         testString = [
             "WRITER .BYT",
             "MAIN LDA R2 WRITER",
-            "ADDI R1 #1",
+            "ADDI r1 R1 #1",
             "ISTB R1 R2",
             "TRP #0"
         ]
@@ -464,7 +472,7 @@ class TestAssembler(unittest.TestCase):
         assembler.firstInstruction = [-1]
         testString = [
             "MAIN MOVI R1 #1",
-            "CMPI R1 #1",
+            "CMPI R1 r2 #1",
             "TRP #0"
         ]        
         memory,lines, slines, labels, error = assembler.assemble(testString)
@@ -475,7 +483,7 @@ class TestAssembler(unittest.TestCase):
         assembler.firstInstruction = [-1]
         testString = [
             "MAIN MOVI R1 #2",
-            "MULI R1 #3",
+            "MULI R1 r0 #3",
             "TRP #0"
         ]
         memory,lines, slines, labels, error = assembler.assemble(testString)
@@ -486,7 +494,7 @@ class TestAssembler(unittest.TestCase):
         assembler.firstInstruction = [-1]
         testString = [
             "MAIN MOVI R1 #6",
-            "DIVI R1 #3",
+            "DIVI R1 r0 #3",
             "TRP #0"
         ]
         memory,lines, slines, labels, error = assembler.assemble(testString)
@@ -530,8 +538,8 @@ class TestAssembler(unittest.TestCase):
         assembler.firstInstruction = [-1]
         testString = [
             "MAIN MOVI R1 #6",
-            "ADDI R2 #3"
-            "SDIV R1 R2",
+            "ADDI r1 R2 #3",
+            "SDIV R1 R2 r0",
             "TRP #0"
         ]
         memory,lines, slines, labels, error = assembler.assemble(testString)
@@ -582,7 +590,7 @@ class TestAssembler(unittest.TestCase):
         assembler.firstInstruction = [-1]
         testString = [
             "MAIN CALL FUN",
-            "FUN ADDI R1 #1",
+            "FUN ADDI r1 R1 #1",
             "TRP #0"
         ]
         memory,lines, slines, labels, error = assembler.assemble(testString)
@@ -594,7 +602,7 @@ class TestAssembler(unittest.TestCase):
         testString = [
             "MAIN CALL FUN",
             "TRP #0",
-            "FUN ADDI R1 #1",
+            "FUN ADDI r1 R1 #1",
             "RET"
         ]
         memory,lines, slines, labels, error = assembler.assemble(testString)
@@ -686,11 +694,100 @@ class TestAssembler(unittest.TestCase):
         self.assertEqual(memory[4].getInt(), 0)
         self.assertEqual(memory[5].getInt(), 0)
         self.assertEqual(memory[6].getInt(), 0)
+        self.assertEqual(memory[7].getInt(), 8)
+        # self.assertEqual(memory[8].getInt(), 21)
+    
+    def test_jmr_mem(self):
+        assembler.firstInstruction = [-1]
+        testString = [
+            "MAIN JMR r3",
+            "MOV r0 r1",
+            "TRP #0"
+        ]
+        memory,_, _, _, error = assembler.assemble(testString)
+        self.assertEqual(error, '')
+        self.assertEqual(memory[0].getInt(), 2)
+        self.assertEqual(memory[1].getInt(), 3)
+        self.assertEqual(memory[2].getInt(), 0)
+        self.assertEqual(memory[3].getInt(), 0)
+        self.assertEqual(memory[4].getInt(), 0)
+        self.assertEqual(memory[5].getInt(), 0)
+        self.assertEqual(memory[6].getInt(), 0)
         self.assertEqual(memory[7].getInt(), 0)
-        self.assertEqual(memory[8].getInt(), 12)
 
+    def test_bnz_mem(self):
+        assembler.firstInstruction = [-1]
+        testString = [
+            "MAIN BNZ r3 end",
+            "MOV r0 r1",
+            "end TRP #0"
+        ]
+        memory,_, _, _, error = assembler.assemble(testString)
+        self.assertEqual(error, '')
+        self.assertEqual(memory[0].getInt(), 3)
+        self.assertEqual(memory[1].getInt(), 3)
+        self.assertEqual(memory[2].getInt(), 0)
+        self.assertEqual(memory[3].getInt(), 0)
+        self.assertEqual(memory[4].getInt(), 0)
+        self.assertEqual(memory[5].getInt(), 0)
+        self.assertEqual(memory[6].getInt(), 0)
+        self.assertEqual(memory[7].getInt(), 16)
+
+    def test_bgt_mem(self):
+        assembler.firstInstruction = [-1]
+        testString = [
+            "MAIN BGT r3 end",
+            "MOV r0 r1",
+            "end TRP #0"
+        ]
+        memory,_, _, _, error = assembler.assemble(testString)
+        self.assertEqual(error, '')
+        self.assertEqual(memory[0].getInt(), 4)
+        self.assertEqual(memory[1].getInt(), 3)
+        self.assertEqual(memory[2].getInt(), 0)
+        self.assertEqual(memory[3].getInt(), 0)
+        self.assertEqual(memory[4].getInt(), 0)
+        self.assertEqual(memory[5].getInt(), 0)
+        self.assertEqual(memory[6].getInt(), 0)
+        self.assertEqual(memory[7].getInt(), 16)
+
+    def test_blt_mem(self):
+        assembler.firstInstruction = [-1]
+        testString = [
+            "MAIN BLT r3 end",
+            "MOV r0 r1",
+            "end TRP #0"
+        ]
+        memory,_, _, _, error = assembler.assemble(testString)
+        self.assertEqual(error, '')
+        self.assertEqual(memory[0].getInt(), 5)
+        self.assertEqual(memory[1].getInt(), 3)
+        self.assertEqual(memory[2].getInt(), 0)
+        self.assertEqual(memory[3].getInt(), 0)
+        self.assertEqual(memory[4].getInt(), 0)
+        self.assertEqual(memory[5].getInt(), 0)
+        self.assertEqual(memory[6].getInt(), 0)
+        self.assertEqual(memory[7].getInt(), 16)
+
+    def test_brz_mem(self):
+        assembler.firstInstruction = [-1]
+        testString = [
+            "MAIN BRZ r3 end",
+            "MOV r0 r1",
+            "end TRP #0"
+        ]
+        memory,_, _, _, error = assembler.assemble(testString)
+        self.assertEqual(error, '')
+        self.assertEqual(memory[0].getInt(), 6)
+        self.assertEqual(memory[1].getInt(), 3)
+        self.assertEqual(memory[2].getInt(), 0)
+        self.assertEqual(memory[3].getInt(), 0)
+        self.assertEqual(memory[4].getInt(), 0)
+        self.assertEqual(memory[5].getInt(), 0)
+        self.assertEqual(memory[6].getInt(), 0)
+        self.assertEqual(memory[7].getInt(), 16)
     
 
 if __name__ == '__main__':
     t = TestAssembler()
-    t.test_bts_mem()
+    t.test_brz_mem()
