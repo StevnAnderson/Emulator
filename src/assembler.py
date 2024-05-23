@@ -1,14 +1,9 @@
-import sys
+import sys, os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
 from enum import Enum
 import re, shlex
-try:
-    import src.registers as regs
-except:
-    import registers as regs
-try:
-    import src.address as address
-except:
-    import address
+import registers as regs
+import address as address
 
 R0, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15, pc, sl, sb, sp, fp, hp = regs.registers.values()
 registers = {'R0':R0, 'R1':R1, 'R2':R2, 'R3':R3, 'R4':R4, 'R5':R5, 'R6':R6, 'R7':R7, 'R8':R8, 'R9':R9, 'R10':R10, 'R11':R11, 'R12':R12, 'R13':R13, 'R14':R14, 'R15':R15, 'pc':pc, 'sl':sl, 'sb':sb, 'sp':sp, 'fp':fp, 'hp':hp} 
@@ -170,8 +165,6 @@ def litBreak(value):
     three = destination[16:24]
     four = destination[24:]
     return [one,two,three,four]
-        
-
 
 def addInstruction(mem,vals):
     for i in range(8):
@@ -429,20 +422,19 @@ def assemble(lines):
 
 def main():
     if len(sys.argv) < 2:
-        error+="Please specify a file to run next time...\n"
-        sys.exit(1)
-
+        sys.stderr.write("Please specify a file to run next time...\n")
+        return -1
+    if os.path.exists(sys.argv[1]) == False:
+        sys.stderr.write('File "' + sys.argv[1] + '" does not exist...\n')
+        return -1
     with open(sys.argv[1], "r") as f:
         lines = f.readlines()
-
     memory, olines, slines, labels, error = assemble(lines)
     if error:
         sys.stderr.write(error)
         return error
-    
 
-
-
+    [print(m.get()) for m in memory]
 
 if __name__ == "__main__":
     main()

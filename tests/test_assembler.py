@@ -1,8 +1,6 @@
-import unittest
-try:
-    import src.assembler as assembler
-except:
-    import assembler as assembler
+import unittest, os, sys
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
+import assembler
 
 
 class TestAssembler(unittest.TestCase):
@@ -1446,8 +1444,7 @@ class TestAssembler(unittest.TestCase):
 
 if __name__ == '__main__':
     t = TestAssembler()
-    t.test_pshr_mem()
+    t.test_addi_mem()
     # ml = [func for func in dir(TestAssembler) if callable(getattr(TestAssembler, func)) and func.startswith('test_')]
     # for func in ml:
-    #     print(func)
     #     eval(f't.{func}()')
