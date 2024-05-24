@@ -251,7 +251,8 @@ def litBreak(value):
     four = destination[24:]
     return [one,two,three,four]
 
-def addInstruction(mem,vals):
+def addInstruction(mem,vals,line):
+    toCode(line)
     for i in range(8):
         mem.append(address.Address())
         mem[-1].set(vals[i])
@@ -348,14 +349,17 @@ def tokenify(lines):
         retlines.append([label, operator, operand1, operand2, operand3])
     return [oLines, retlines, error]
 
-def readInstruction(memory, registers):
+def readInstruction(memory, registers,error):
+    if registers['pc'].getInt() >= len(memory)-7 or registers['pc'].getInt() < 0:
+        error+='PC out of bounds: ' + str(registers['pc'].getInt())
+        return 0,0,0,0,0,error
     instRegs = memory[registers['pc'].getInt():registers['pc'].getInt()+8]
     operator = instRegs[0].getInt()
     operand1 = instRegs[1].getInt()
     operand2 = instRegs[2].getInt()
     operand3 = instRegs[3].getInt()
     immediate = int(instRegs[4].get() + instRegs[5].get() + instRegs[6].get() + instRegs[7].get(),2)
-    return operator, operand1, operand2, operand3, immediate
+    return operator, operand1, operand2, operand3, immediate, error
 
 def assemble(lines):
     olines,slines, error = tokenify(lines)
@@ -458,6 +462,7 @@ def assemble(lines):
         
     # Build Memory
     memory = []
+    firstInstruction[0] = -1
     for (oline,sline) in zip(olines,slines):
 
         label, operator, operand1, operand2, operand3 = sline
@@ -486,34 +491,34 @@ def assemble(lines):
                     memory.append(address.Address())
                 else:
                     memory[-1].set(int(operand1[1:]))
-                    for c in operand1[1:]:
+                    for _ in range(int(operand1[1:])):
                         memory.append(address.Address())
                     memory.append(address.Address())
             case '.BTS':
                 for n in range(int(operand1[1:])):
                     memory.append(address.Address())
             case 'JMP':
-                addInstruction(memory,[1,0,0,0] + litBreak(labels[operand1]))
+                addInstruction(memory,[1,0,0,0] + litBreak(labels[operand1]),len(memory)+1)
             case 'JMR'| 'PSHR' | 'PSHB' | 'POPR' | 'POPB':                                                                                  # Integer
-                addInstruction(memory,[instructions.get(operator),int(operand1[1:]),0,0] + litBreak(0))                         
+                addInstruction(memory,[instructions.get(operator),int(operand1[1:]),0,0] + litBreak(0),len(memory)+1)
             case 'BNZ' | 'BGT' | 'BLT' | 'BRZ':                                                                                             # Integer | label
-                addInstruction(memory,[instructions.get(operator),int(operand1[1:]),0,0] + litBreak(labels[operand2]))          
+                addInstruction(memory,[instructions.get(operator),int(operand1[1:]),0,0] + litBreak(labels[operand2]),len(memory)+1)
             case 'MOV' | 'IALLC' | 'ISTR' | 'ISTB' | 'ILDB' | 'ILDR':                                                                       # Register, Register
-                addInstruction(memory,[instructions.get(operator),int(operand1[1:]),int(operand2[1:]),0] + litBreak(0))            
+                addInstruction(memory,[instructions.get(operator),int(operand1[1:]),int(operand2[1:]),0] + litBreak(0),len(memory)+1)
             case 'MOVI' | 'ALCI':                                                                                                           # Register | Num
-                addInstruction(memory,[instructions.get(operator),int(operand1[1:]),0,0] + litBreak(operand2))         
+                addInstruction(memory,[instructions.get(operator),int(operand1[1:]),0,0] + litBreak(operand2),len(memory)+1)
             case 'STR' | 'LDR' | 'LDB' | 'STB' | 'LDA' | 'ALLC':                                                                            # Register | label
-                addInstruction(memory,[instructions.get(operator),int(operand1[1:]),0,0] + litBreak(labels[operand2]))            
+                addInstruction(memory,[instructions.get(operator),int(operand1[1:]),0,0] + litBreak(labels[operand2]),len(memory)+1)
             case 'ADDI' | 'MULI' | 'DIVI' |  'CMPI' | 'SUBI':                                                                               # register, register | Num
-                addInstruction(memory,[instructions.get(operator),int(operand1[1:]),int(operand2[1:]),0] + litBreak(operand3))
+                addInstruction(memory,[instructions.get(operator),int(operand1[1:]),int(operand2[1:]),0] + litBreak(operand3),len(memory)+1)
             case 'ADD' | 'SUB' | 'MUL' | 'DIV' | 'SDIV' | 'AND' | 'OR' | 'CMP':                                                             # register, register, register
-                addInstruction(memory,[instructions.get(operator),int(operand1[1:]),int(operand2[1:]),int(operand3[1:])] + litBreak(0))     
+                addInstruction(memory,[instructions.get(operator),int(operand1[1:]),int(operand2[1:]),int(operand3[1:])] + litBreak(0),len(memory)+1)
             case 'TRP':                                                                                                                    # |Integer
-                addInstruction(memory,[instructions.get(operator),0,0,0] + litBreak(operand1))
+                addInstruction(memory,[instructions.get(operator),0,0,0] + litBreak(operand1), len(memory)+1)
             case 'CALL':                                                                                                                   # label
-                addInstruction(memory,[instructions.get(operator),0,0,0] + litBreak(labels[operand1]))
+                addInstruction(memory,[instructions.get(operator),0,0,0] + litBreak(labels[operand1]), len(memory)+1)
             case 'RET':                                                                                                                    # |
-                addInstruction(memory,[instructions.get(operator),0,0,0] + litBreak(0))
+                addInstruction(memory,[instructions.get(operator),0,0,0] + litBreak(0), len(memory)+1)
 
     registers['pc'].set(firstInstruction[0])
     registers['sb'].set(len(memory))
@@ -525,12 +530,35 @@ def assemble(lines):
 def emulate(memory,registers):
     error = ''
     while True:
-        operator, operand1, operand2, operand3, immediate = readInstruction(memory, registers)
+        operator, operand1, operand2, operand3, immediate,error = readInstruction(memory, registers, error)
+        if error:
+            return (memory,error)
+        inc = True
         match instructions.get(operator):
             case 'JMP':
                 registers['pc'].set(immediate)
+                inc = False
+            case 'JMR':
+                registers['pc'].set(registers['R'+str(operand1)].getInt())
+                inc = False
+            case 'BNZ':
+                if registers['R'+str(operand1)].getInt():
+                    registers['pc'].set(immediate)
+                    inc = False
+            case 'BGT':
+                if registers['R'+str(operand1)].getInt() > registers['R'+str(operand2)].getInt():
+                    registers['pc'].set(immediate)
+                    inc = False
+            case 'BLT':
+                if registers['R'+str(operand1)].getInt() < registers['R'+str(operand2)].getInt():
+                    registers['pc'].set(immediate)
+                    inc = False
+            case 'BRZ':
+                if registers['R'+str(operand1)].getInt() == 0:
+                    registers['pc'].set(immediate)
+                    inc = False
             case 'ADDI':
-                num = registers['R'+str(operand1)].getInt() + immediate
+                num = registers['R'+str(operand2)].getInt() + immediate
                 registers['R'+str(operand1)].set(num)
             case 'TRP':
                 match immediate:
@@ -548,15 +576,24 @@ def emulate(memory,registers):
                     case 3:
                         sys.stdout.write(registers['R3'].getChar())
                     case 4:
-                        pass
+                        inp = input()
+                        registers['R3'].set(ord(inp))                            
                     case 5:
-                        pass
+                        num = memory[registers['R3'].getInt()].getInt()
+                        for c in memory[registers['R3'].getInt()+1:registers['R3'].getInt()+num+1]:
+                            sys.stdout.write(chr(c.getInt()))
                     case 6:
-                        pass
+                        num = memory[registers['R3'].getInt()].getInt()
+                        inp = input()
+                        start = registers['R3'].getInt()+1
+                        for i,c in enumerate(inp):
+                            memory[start+i].set(ord(c))
                     case 98:
-                        pass
-        if instructions.get(operator) != 'JMP':
+                        for r in registers:
+                            sys.stdout.write(r + ': ' + registers[r].get() + '\n')
+        if inc:
             registers['pc'].set(registers['pc'].getInt() + 8)
+            inc = True
 
 def main():
     if len(sys.argv) < 2:
