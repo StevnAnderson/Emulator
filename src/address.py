@@ -2,8 +2,8 @@ import sys
 
 class Address:
     def __init__(self, bits=8):
-        self.value = ('{0:0' + str(bits) + 'b}').format(0)
         self.nbits = bits
+        self.value = ('{0:0' + str(bits) + 'b}').format(0)
     
     def set(self, value, binary=False):
         if not binary:
@@ -25,9 +25,12 @@ class Address:
 
     def get(self):
         return self.value
-    
-    def getAscii(self,value):
-        return chr(int(self.getByte(3),2))
+
+    def getChar(self):
+        n = self.getInt()
+        if n > 255:
+            return str(n)
+        return chr(self.getInt())
 
     def getInt(self):
         if self.value[0] == '1':

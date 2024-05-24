@@ -287,23 +287,23 @@ hp: 00000000000000000000001010000100
         self.assertEqual(error, '')
         self.assertEqual(vm.registers['R1'].getInt(), 1)
 
-    # def test_blt(self):
-    #     self.reset()
-    #     testString = [
-    #         "MAIN ADDI r1 r1 #-1",
-    #         "BLT r1 end",
-    #         "ADDI r1 r1 #1",
-    #         "end TRP #0"
-    #     ]
-    #     memory,lines, slines, labels, error = vm.assemble(testString)
-    #     memory,error = vm.emulate(memory, vm.registers)
-    #     self.assertEqual(error, '')
-    #     self.assertEqual(vm.registers['R1'].getInt(), 2)
+    def test_blt(self):
+        self.reset()
+        testString = [
+            "MAIN ADDI r1 r1 #-1",
+            "BLT r1 end",
+            "ADDI r2 r2 #1",
+            "end TRP #0"
+        ]
+        memory,lines, slines, labels, error = vm.assemble(testString)
+        memory,error = vm.emulate(memory, vm.registers)
+        self.assertEqual(error, '')
+        self.assertEqual(vm.registers['R1'].getInt(), -1)
+        self.assertEqual(vm.registers['R2'].getInt(), 0)
 
 if __name__ == '__main__':
     t = TestEmulator()
     # t.test_jmr()
     ml = [func for func in dir(TestEmulator) if callable(getattr(TestEmulator, func)) and func.startswith('test_')]
     for func in ml:
-        print(func)
         eval(f't.{func}()')

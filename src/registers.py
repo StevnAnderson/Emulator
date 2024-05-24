@@ -1,18 +1,33 @@
 from enum import Enum
 
 class Register():
-    def __init__(self):
-        self.value = '{0:032b}'.format(0)
+    def __init__(self, bits=32):
+        self.nbits = bits
+        self.value = ('{0:0' + str(self.nbits) + 'b}').format(0)
     
-    def set(self, value):
-        if type(value)==int:
-            self.value = '{0:032b}'.format(value)
-        if type(value)==str:
-            if value.isdigit():
-                self.value = '{0:032b}'.format(int(value))
+    def set(self, value, binary=False):
+        if not binary:
+            if type(value) == int:
+                if value < 0:
+                    self.value = ('{0:0' + str(self.nbits) + 'b}').format((1 << self.nbits) + value)
+                else:
+                    if (value & (1 << (self.nbits - 1))) != 0:
+                        value = value - (1 << self.nbits)
+                    self.value = ('{0:0' + str(self.nbits) + 'b}').format(value)
+            elif type(value) == str:
+                self.set(value, True)
+        else:
+            if type(value) == str:
+                if [x for x in value if x != '0' and x != '1']:
+                    print('Invalid binary string "' + value + '"' )
+                    return
+                self.value = ('{0:0' + str(self.nbits) + 'b}').format(int(value,2))
 
     def getInt(self):
-        return int(self.value, 2)
+        if self.value[0] == '1':
+            return (int(self.value,2) - (1 << self.nbits))
+        else:
+            return int(self.value, 2)
     
     def getChar(self):
         n = self.getInt()
