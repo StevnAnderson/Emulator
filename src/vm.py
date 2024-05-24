@@ -60,89 +60,174 @@ class instructions(Enum):
     RET = 40
 
     def get(val):
-        match val:
-            case 'JMP':
-                return 1
-            case 'JMR':
-                return 2
-            case 'BNZ':
-                return 3
-            case 'BGT':
-                return 4
-            case 'BLT':
-                return 5
-            case 'BRZ':
-                return 6
-            case 'MOV':
-                return 7
-            case 'MOVI':
-                return 8
-            case 'LDA':
-                return 9
-            case 'STR':
-                return 10
-            case 'LDR':
-                return 11
-            case 'STB':
-                return 12
-            case 'LDB':
-                return 13
-            case 'ISTR':
-                return 14
-            case 'ILDR':
-                return 15
-            case 'ISTB':
-                return 16
-            case 'ILDB':
-                return 17
-            case 'ADD':
-                return 18
-            case 'ADDI':
-                return 19
-            case 'SUB':
-                return 20
-            case 'SUBI':
-                return 21
-            case 'MUL':
-                return 22
-            case 'MULI':
-                return 23
-            case 'DIV':
-                return 24
-            case 'SDIV':
-                return 25
-            case 'DIVI':
-                return 26
-            case 'AND':
-                return 27
-            case 'OR':
-                return 28
-            case 'CMP':
-                return 29
-            case 'CMPI':
-                return 30
-            case 'TRP':
-                return 31
-            case 'ALCI':
-                return 32
-            case 'ALLC':
-                return 33
-            case 'IALLC':
-                return 34
-            case 'PSHR':
-                return 35
-            case 'PSHB':
-                return 36
-            case 'POPR':
-                return 37
-            case 'POPB':
-                return 38
-            case 'CALL':
-                return 39
-            case 'RET':
-                return 40
-            case _:
-                return 0
+        if type(val) == str:
+            match val:
+                case 'JMP':
+                    return 1
+                case 'JMR':
+                    return 2
+                case 'BNZ':
+                    return 3
+                case 'BGT':
+                    return 4
+                case 'BLT':
+                    return 5
+                case 'BRZ':
+                    return 6
+                case 'MOV':
+                    return 7
+                case 'MOVI':
+                    return 8
+                case 'LDA':
+                    return 9
+                case 'STR':
+                    return 10
+                case 'LDR':
+                    return 11
+                case 'STB':
+                    return 12
+                case 'LDB':
+                    return 13
+                case 'ISTR':
+                    return 14
+                case 'ILDR':
+                    return 15
+                case 'ISTB':
+                    return 16
+                case 'ILDB':
+                    return 17
+                case 'ADD':
+                    return 18
+                case 'ADDI':
+                    return 19
+                case 'SUB':
+                    return 20
+                case 'SUBI':
+                    return 21
+                case 'MUL':
+                    return 22
+                case 'MULI':
+                    return 23
+                case 'DIV':
+                    return 24
+                case 'SDIV':
+                    return 25
+                case 'DIVI':
+                    return 26
+                case 'AND':
+                    return 27
+                case 'OR':
+                    return 28
+                case 'CMP':
+                    return 29
+                case 'CMPI':
+                    return 30
+                case 'TRP':
+                    return 31
+                case 'ALCI':
+                    return 32
+                case 'ALLC':
+                    return 33
+                case 'IALLC':
+                    return 34
+                case 'PSHR':
+                    return 35
+                case 'PSHB':
+                    return 36
+                case 'POPR':
+                    return 37
+                case 'POPB':
+                    return 38
+                case 'CALL':
+                    return 39
+                case 'RET':
+                    return 40
+                case _:
+                    return 0
+        else:
+            match val:
+                case 1:
+                    return 'JMP'
+                case 2:
+                    return 'JMR'
+                case 3:
+                    return 'BNZ'
+                case 4:
+                    return 'BGT'
+                case 5:
+                    return 'BLT'
+                case 6:
+                    return 'BRZ'
+                case 7:
+                    return 'MOV'
+                case 8:
+                    return 'MOVI'
+                case 9:
+                    return 'LDA'
+                case 10:
+                    return 'STR'
+                case 11:
+                    return 'LDR'
+                case 12:
+                    return 'STB'
+                case 13:
+                    return 'LDB'
+                case 14:
+                    return 'ISTR'
+                case 15:
+                    return 'ILDR'
+                case 16:
+                    return 'ISTB'
+                case 17:            
+                    return 'ILDB'
+                case 18:
+                    return 'ADD'    
+                case 19:
+                    return 'ADDI'
+                case 20:
+                    return 'SUB'
+                case 21:
+                    return 'SUBI'
+                case 22:
+                    return 'MUL'
+                case 23:
+                    return 'MULI'
+                case 24:
+                    return 'DIV'
+                case 25:
+                    return 'SDIV'
+                case 26:
+                    return 'DIVI'
+                case 27:
+                    return 'AND'
+                case 28:
+                    return 'OR'
+                case 29:
+                    return 'CMP'
+                case 30:
+                    return 'CMPI'
+                case 31:
+                    return 'TRP'
+                case 32:
+                    return 'ALCI'
+                case 33:
+                    return 'ALLC'
+                case 34:
+                    return 'IALLC'
+                case 35:
+                    return 'PSHR'
+                case 36:
+                    return 'PSHB'
+                case 37:
+                    return 'POPR'    
+                case 38:
+                    return 'POPB'
+                case 39:
+                    return 'CALL'
+                case 40:
+                    return 'RET'
+                case _:
+                    return 0
 
 def makeBinary(value, bits=32):
     if value < 0:
@@ -173,7 +258,7 @@ def addInstruction(mem,vals):
         
 def toCode(line):
     if firstInstruction[0] == -1:
-        firstInstruction[0] = line
+        firstInstruction[0] = line-1
     
 def labelIsInstruction(l, label, labels, error):
     if labels[label] < firstInstruction[0]:
@@ -262,7 +347,16 @@ def tokenify(lines):
                 operand3 = None
         retlines.append([label, operator, operand1, operand2, operand3])
     return [oLines, retlines, error]
-        
+
+def readInstruction(memory, registers):
+    instRegs = memory[registers['pc'].getInt():registers['pc'].getInt()+8]
+    operator = instRegs[0].getInt()
+    operand1 = instRegs[1].getInt()
+    operand2 = instRegs[2].getInt()
+    operand3 = instRegs[3].getInt()
+    immediate = int(instRegs[4].get() + instRegs[5].get() + instRegs[6].get() + instRegs[7].get(),2)
+    return operator, operand1, operand2, operand3, immediate
+
 def assemble(lines):
     olines,slines, error = tokenify(lines)
     if error:
@@ -273,6 +367,10 @@ def assemble(lines):
     for l,line in zip(lines,slines):
         label, operator, operand1, operand2, operand3 = line
         if label: 
+            if label in labels:
+                error+='\nDuplicate label: ' + label + '\n'
+                return [],[],[],{}, error
+            else:
              labels[label] = lineNo
         if operator[0] == '.' and operator[1:] in directives.__members__:
             if firstInstruction[0]!=-1:
@@ -417,17 +515,48 @@ def assemble(lines):
             case 'RET':                                                                                                                    # |
                 addInstruction(memory,[instructions.get(operator),0,0,0] + litBreak(0))
 
-    registers[pc] = firstInstruction
-    registers[sb] = len(memory)
-    registers[sp] = len(memory)
-    registers[hp] = 
+    registers['pc'].set(firstInstruction[0])
+    registers['sb'].set(len(memory))
+    registers['sp'].set(len(memory) + stackSize)
+    registers['hp'].set(len(memory) + stackSize)
+    registers['sl'].set(len(memory) + stackSize)
     return (memory,olines, slines, labels, error)
 
-def emulate(memory, labels):
+def emulate(memory,registers):
     error = ''
-    for m in memory:
-        pass
-    return (memory, error)
+    while True:
+        operator, operand1, operand2, operand3, immediate = readInstruction(memory, registers)
+        match instructions.get(operator):
+            case 'JMP':
+                registers['pc'].set(immediate)
+            case 'ADDI':
+                num = registers['R'+str(operand1)].getInt() + immediate
+                registers['R'+str(operand1)].set(num)
+            case 'TRP':
+                match immediate:
+                    case 0:
+                        return (memory,error)
+                    case 1:
+                        sys.stdout.write(str(registers['R3'].getInt()))
+                    case 2:
+                        inp = input()
+                        try:
+                            registers['R3'].set(int(inp))
+                        except:
+                            error+='TRP 2: Invalid input: ' + inp + '\n'
+                            return (memory,error)
+                    case 3:
+                        sys.stdout.write(registers['R3'].getChar())
+                    case 4:
+                        pass
+                    case 5:
+                        pass
+                    case 6:
+                        pass
+                    case 98:
+                        pass
+        if instructions.get(operator) != 'JMP':
+            registers['pc'].set(registers['pc'].getInt() + 8)
 
 def main():
     if len(sys.argv) < 2:
@@ -443,6 +572,6 @@ def main():
         sys.stderr.write(error)
         return error
 
-    memory, error = emulate(memory,labels)
+    memory, error = emulate(memory, registers)
 if __name__ == "__main__":
     main()

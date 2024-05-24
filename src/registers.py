@@ -14,6 +14,12 @@ class Register():
     def getInt(self):
         return int(self.value, 2)
     
+    def getChar(self):
+        n = self.getInt()
+        if n > 255:
+            return str(n)
+        return chr(self.getInt())
+    
     def get(self):
         return self.value
     
