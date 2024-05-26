@@ -359,7 +359,29 @@ def readInstruction(memory, registers,error):
     operand2 = instRegs[2].getInt()
     operand3 = instRegs[3].getInt()
     immediate = int(instRegs[4].get() + instRegs[5].get() + instRegs[6].get() + instRegs[7].get(),2)
-    return operator, operand1, operand2, operand3, immediate, error
+    if instRegs[4].get()[0] == '1':
+        immediate = immediate - (1 << 32)
+    return operator, operand1, operand2, operand3, immediate, error        
+
+def writeInt(memory, address, value, error):
+    if address >= len(memory) -3 or address < 0:
+        error+='Address out of bounds: ' + str(address)
+        return error
+    value = makeBinary(value,32)
+    memory[address].set(value[0:8])
+    memory[address+1].set(value[8:16])
+    memory[address+2].set(value[16:24])
+    memory[address+3].set(value[24:32])
+    return error
+
+def readInt(memory, address, error):
+    if address >= len(memory) -3 or address < 0:
+        error+='Address out of bounds: ' + str(address)
+        return 0,error
+    retVal = int(memory[address].get() + memory[address+1].get() + memory[address+2].get() + memory[address+3].get(),2)
+    if memory[address].get()[0] == '1':
+        retVal = retVal - (1 << 32)
+    return retVal,error
 
 def assemble(lines):
     olines,slines, error = tokenify(lines)
@@ -412,7 +434,10 @@ def assemble(lines):
                             error+='Invalid syntax in "' + l + '"  STR data must be string in double quotes. examples: ".STR "hello""\n'
                     else:
                         error+='Invalid syntax in "' + l + '"  STR data operand must be string or string length. examples: ".STR "hello"", ".STR #12"\n'
-                    lineNo+=len(operand1)-1
+                    if operand1[0] == '#':
+                        lineNo+=int(operand1[1:])+1
+                    else:
+                        lineNo+=len(operand1)-1
         if operator in instructions.__members__:
             toCode( lineNo +1)
             lineNo+=7
@@ -520,11 +545,12 @@ def assemble(lines):
             case 'RET':                                                                                                                    # |
                 addInstruction(memory,[instructions.get(operator),0,0,0] + litBreak(0), len(memory)+1)
 
-    registers['pc'].set(firstInstruction[0])
-    registers['sb'].set(len(memory))
-    registers['sp'].set(len(memory) + stackSize)
-    registers['hp'].set(len(memory) + stackSize)
-    registers['sl'].set(len(memory) + stackSize)
+    registers['pc'].set(labels['MAIN'])
+    registers['sl'].set(len(memory))
+    [memory.append(address.Address()) for _ in range(stackSize*2)]
+    registers['sp'].set(registers['sl'].getInt())
+    registers['hp'].set(registers['sl'].getInt() + stackSize)
+    registers['sb'].set(registers['sl'].getInt() + stackSize-1)
     return (memory,olines, slines, labels, error)
 
 def emulate(memory,registers):
@@ -557,9 +583,73 @@ def emulate(memory,registers):
                 if registers['R'+str(operand1)].getInt() == 0:
                     registers['pc'].set(immediate)
                     inc = False
+            case 'MOV':
+                registers['R'+str(operand1)].set(registers['R'+str(operand2)].getInt())
+            case 'MOVI'| 'LDA':
+                registers['R'+str(operand1)].set(immediate)
+            case 'STR':
+                writeInt(memory,immediate,registers['R'+str(operand1)].getInt(),error)
+            case 'LDR':
+                registers['R'+str(operand1)].set(memory[immediate].getInt())
+            case 'STB':
+                memory[immediate].set(registers['R'+str(operand1)].getByte())
+            case 'LDB':
+                registers['R'+str(operand1)].set(memory[immediate].getChar())
+            case 'ISTR':
+                writeInt(memory, registers['R'+str(operand2)].getInt(), registers['R'+str(operand1)].getInt() , error)
+            case "ILDR":
+                addr= registers['R'+str(operand2)].getInt()
+                num,error = readInt(memory, addr, error)
+                if error:
+                    return (memory,error)
+                registers['R'+str(operand1)].set(num)
+            case 'ISTB':
+                byteToStore = registers['R'+str(operand1)].getByte()
+                memory[registers['R'+str(operand2)].getInt()].set(byteToStore)
+            case 'ILDB':
+                registers['R'+str(operand1)].setByte(memory[registers['R'+str(operand2)].getInt()].getInt())
+            case 'ADD':
+                registers['R'+str(operand1)].set(registers['R'+str(operand2)].getInt() + registers['R'+str(operand3)].getInt())
             case 'ADDI':
                 num = registers['R'+str(operand2)].getInt() + immediate
                 registers['R'+str(operand1)].set(num)
+            case 'SUB':
+                registers['R'+str(operand1)].set(registers['R'+str(operand2)].getInt() - registers['R'+str(operand3)].getInt())
+            case 'SUBI':
+                num = registers['R'+str(operand2)].getInt() - immediate
+                registers['R'+str(operand1)].set(num)
+            case 'MUL':
+                registers['R'+str(operand1)].set(registers['R'+str(operand2)].getInt() * registers['R'+str(operand3)].getInt())
+            case 'MULI':
+                num = registers['R'+str(operand2)].getInt() * immediate
+                registers['R'+str(operand1)].set(num)
+            case 'DIV':
+                registers['R'+str(operand1)].set(registers['R'+str(operand2)].getInt() // registers['R'+str(operand3)].getInt())
+            case 'SDIV':
+                registers['R'+str(operand1)].set(registers['R'+str(operand2)].getInt() // registers['R'+str(operand3)].getInt())
+            case 'DIVI':
+                num = registers['R'+str(operand2)].getInt() // immediate
+                registers['R'+str(operand1)].set(num)
+            case 'AND':
+                registers['R'+str(operand1)].set(registers['R'+str(operand2)].getInt() & registers['R'+str(operand3)].getInt())
+            case 'OR':
+                registers['R'+str(operand1)].set(registers['R'+str(operand2)].getInt() | registers['R'+str(operand3)].getInt())
+            case 'CMP':
+                num = registers['R'+str(operand2)].getInt() - registers['R'+str(operand3)].getInt()
+                if num > 0:
+                    registers['R'+str(operand1)].set(1)
+                elif num < 0:
+                    registers['R'+str(operand1)].set(-1)
+                else:
+                    registers['R'+str(operand1)].set(0)
+            case 'CMPI':
+                num = registers['R'+str(operand2)].getInt() - immediate
+                if num > 0:
+                    registers['R'+str(operand1)].set(1)
+                elif num < 0:
+                    registers['R'+str(operand1)].set(-1)
+                else:
+                    registers['R'+str(operand1)].set(0)
             case 'TRP':
                 match immediate:
                     case 0:
@@ -591,6 +681,74 @@ def emulate(memory,registers):
                     case 98:
                         for r in registers:
                             sys.stdout.write(r + ': ' + registers[r].get() + '\n')
+            case 'ALCI':
+                if not registers['R'+str(operand2)].getInt() + immediate < len(memory):
+                    error+='ALCI: Address out of bounds: ' + str(registers['R'+str(operand2)].getInt() + immediate) + '\n'
+                    return (memory,error)
+                registers['R'+str(operand1)].set(registers['hp'].getInt())
+                registers['hp'].set(registers['hp'].getInt() + immediate)
+            case 'ALLC':
+                registers['R'+str(operand1)].set(registers['hp'].getInt())
+                num,error = readInt(memory,immediate,error)
+                if not num + registers['hp'].getInt() < len(memory):
+                    error+='ALLC: Address out of bounds: ' + str(num + registers['hp'].getInt()) + '\n'
+                    return (memory,error)
+                if error:
+                    return (memory,error)
+                t2 = registers['hp'].getInt()
+                registers['hp'].set(registers['hp'].getInt() + num)
+            case 'IALLC':
+                numAddress = registers['R'+str(operand2)].getInt()
+                num,error = readInt(memory,numAddress,error)
+                if not num + registers['hp'].getInt() < len(memory):
+                    error+='IALLC: Address out of bounds: ' + str(num + registers['hp'].getInt()) + '\n'
+                    return (memory,error)
+                if error:
+                    return (memory,error)
+                registers['R'+str(operand1)].set(registers['hp'].getInt())
+                registers['hp'].set(registers['hp'].getInt() + num)
+            case 'PSHR':
+                writeInt(memory, registers['sp'].getInt(), registers['R'+str(operand1)].getInt(), error)
+                if error:
+                    return (memory,error)
+                registers['sp'].set(registers['sp'].getInt() + 4)
+            case 'PSHB':
+                if not registers['sp'].getInt() + 1 < len(memory):
+                    error+='PSHB: Address out of bounds: ' + str(registers['sp'].getInt() + 1) + '\n'
+                    return (memory,error)
+                memory[registers['sp'].getInt()].set(registers['R'+str(operand1)].getByte())
+                registers['sp'].set(registers['sp'].getInt() + 1)
+            case 'POPR':
+                if not registers['sp'].getInt() - 4 >= registers['sl'].getInt():
+                    error+='POPR: Stack underflow\n'
+                    return (memory,error)
+                registers['sp'].set(registers['sp'].getInt() - 4)
+                num,error = readInt(memory, registers['sp'].getInt(), error)
+                if error:
+                    return (memory,error)
+                registers['R'+str(operand1)].set(num)
+            case 'POPB':
+                if not registers['sp'].getInt() - 1 >= registers['sl'].getInt():
+                    error+='POPB: Stack underflow\n'
+                    return (memory,error)
+                registers['sp'].set(registers['sp'].getInt() - 1)
+                registers['R'+str(operand1)].set(memory[registers['sp'].getInt()].getInt())
+            case 'CALL':
+                error = writeInt(memory, registers['sp'].getInt(), registers['pc'].getInt(), error)
+                if error:
+                    return (memory,error)
+                registers['sp'].set(registers['sp'].getInt() + 4)
+                registers['pc'].set(immediate)
+                inc = False
+            case 'RET':
+                if not registers['sp'].getInt() - 4 >= registers['sl'].getInt():
+                    error+='RET: Stack underflow\n'
+                    return (memory,error)
+                registers['sp'].set(registers['sp'].getInt() - 4)
+                retAddress,error = readInt(memory, registers['sp'].getInt(), error)
+                if error:
+                    return (memory,error)
+                registers['pc'].set(retAddress)
         if inc:
             registers['pc'].set(registers['pc'].getInt() + 8)
             inc = True

@@ -17,6 +17,7 @@ class TestEmulator(unittest.TestCase):
             "MAIN TRP #0"
         ]
         memory,lines, slines, labels, error = vm.assemble(testString)
+        self.assertEqual(error, '')
         memory,error = vm.emulate(memory, vm.registers)
         self.assertEqual(error, '')
 
@@ -203,9 +204,9 @@ R13: 00000000000000000000000000001101
 R14: 00000000000000000000000000001110
 R15: 00000000000000000000000000001111
 pc: 00000000000000000000000010000000
-sl: 00000000000000000000001010000100
-sb: 00000000000000000000000010010000
-sp: 00000000000000000000001010000100
+sl: 00000000000000000000000010010000
+sb: 00000000000000000000001010000011
+sp: 00000000000000000000000010010000
 fp: 00000000000000000000000000000000
 hp: 00000000000000000000001010000100
 ''')
@@ -219,6 +220,7 @@ hp: 00000000000000000000001010000100
             "end TRP #0"
         ]
         memory,lines, slines, labels, error = vm.assemble(testString)
+        self.assertEqual(error, '')
         memory,error = vm.emulate(memory, vm.registers)
         self.assertEqual(error, '')
         self.assertEqual(vm.registers['R0'].getInt(), 0)
@@ -232,37 +234,24 @@ hp: 00000000000000000000001010000100
             "TRP #0"
         ]
         memory,lines, slines, labels, error = vm.assemble(testString)
+        self.assertEqual(error, '')
         memory,error = vm.emulate(memory, vm.registers)
         self.assertEqual(error, '')
         self.assertEqual(vm.registers['R0'].getInt(), 24)
 
-
-    def test_addi(self):
-        self.reset()
-        testString = [
-            "MAIN ADDI r1 r1 #1",
-            "ADDI r2 r1 #1",
-            "TRP #0"
-        ]
-        memory,lines, slines, labels, error = vm.assemble(testString)
-        memory,error = vm.emulate(memory, vm.registers)
-        self.assertEqual(error, '')
-        self.assertEqual(vm.registers['R0'].getInt(), 0)
-        self.assertEqual(vm.registers['R1'].getInt(), 1)
-        self.assertEqual(vm.registers['R2'].getInt(), 2)
-
     def test_bnz(self):
         self.reset()
         testString = [
-            "MAIN ADDI r1 r0 #4",
+            "MAIN ADDI r0 r0 #4",
             "BNZ r0 end",
             "MOV r0 r1",
             "end TRP #0"
         ]
         memory,lines, slines, labels, error = vm.assemble(testString)
+        self.assertEqual(error, '')
         memory,error = vm.emulate(memory, vm.registers)
         self.assertEqual(error, '')
-        self.assertEqual(vm.registers['R0'].getInt(), 0)
+        self.assertEqual(vm.registers['R0'].getInt(), 4)
         self.reset()
         testString = [
             "MAIN BNZ r0 end",
@@ -270,6 +259,7 @@ hp: 00000000000000000000001010000100
             "end TRP #0"
         ]
         memory,lines, slines, labels, error = vm.assemble(testString)
+        self.assertEqual(error, '')
         memory,error = vm.emulate(memory, vm.registers)
         self.assertEqual(error, '')
         self.assertEqual(vm.registers['R0'].getInt(), 1)
@@ -283,6 +273,7 @@ hp: 00000000000000000000001010000100
             "end TRP #0"
         ]
         memory,lines, slines, labels, error = vm.assemble(testString)
+        self.assertEqual(error, '')
         memory,error = vm.emulate(memory, vm.registers)
         self.assertEqual(error, '')
         self.assertEqual(vm.registers['R1'].getInt(), 1)
@@ -296,14 +287,594 @@ hp: 00000000000000000000001010000100
             "end TRP #0"
         ]
         memory,lines, slines, labels, error = vm.assemble(testString)
+        self.assertEqual(error, '')
         memory,error = vm.emulate(memory, vm.registers)
         self.assertEqual(error, '')
         self.assertEqual(vm.registers['R1'].getInt(), -1)
         self.assertEqual(vm.registers['R2'].getInt(), 0)
 
+    def test_brz(self):
+        self.reset()
+        testString = [
+            "MAIN BRZ r1 end",
+            "ADDI r2 r2 #1",
+            "end TRP #0"
+        ]
+        memory,lines, slines, labels, error = vm.assemble(testString)
+        self.assertEqual(error, '')            
+        memory,error = vm.emulate(memory, vm.registers)
+        self.assertEqual(error, '')
+        self.assertEqual(vm.registers['R1'].getInt(), 0)
+        self.assertEqual(vm.registers['R2'].getInt(), 0)
+        self.reset()
+        testString = [
+            "MAIN ADDI r1 r1 #1",
+            "BRZ r1 end",
+            "ADDI r2 r2 #1",
+            "end TRP #0"
+        ]
+        memory,lines, slines, labels, error = vm.assemble(testString)
+        self.assertEqual(error, '')
+        memory,error = vm.emulate(memory, vm.registers)
+        self.assertEqual(error, '')
+        self.assertEqual(vm.registers['R1'].getInt(), 1)
+        self.assertEqual(vm.registers['R2'].getInt(), 1)
+
+    def test_mov(self):
+        self.reset()
+        testString = [
+            "MAIN ADDI r0 r0 #1",
+            "MOV r1 r0",
+            "TRP #0"
+        ]
+        memory,lines, slines, labels, error = vm.assemble(testString)
+        self.assertEqual(error, '')
+        memory,error = vm.emulate(memory, vm.registers)
+        self.assertEqual(error, '')
+        self.assertEqual(vm.registers['R0'].getInt(), 1)
+        self.assertEqual(vm.registers['R1'].getInt(), 1)
+
+    def test_movi(self):
+        self.reset()
+        testString = [
+            "MAIN MOVI r0 #1",
+            "TRP #0"
+        ]
+        memory,lines, slines, labels, error = vm.assemble(testString)
+        self.assertEqual(error, '')
+        memory,error = vm.emulate(memory, vm.registers)
+        self.assertEqual(error, '')
+        self.assertEqual(vm.registers['R0'].getInt(), 1)
+
+    def test_lda(self):
+        self.reset()
+        testString = [
+            "MAIN LDA r2 end",
+            "end TRP #0"
+        ]
+        memory,lines, slines, labels, error = vm.assemble(testString)
+        self.assertEqual(error, '')
+        memory,error = vm.emulate(memory, vm.registers)
+        self.assertEqual(error, '')
+        self.assertEqual(vm.registers['R0'].getInt(), 0)
+        self.assertEqual(vm.registers['R1'].getInt(), 0)
+        self.assertEqual(vm.registers['R2'].getInt(), 8)
+
+    def test_str(self):
+        self.reset()
+        testString = [
+            "myint .INT #0",
+            "MAIN ADDI r0 r0 #1",
+            "STR r0 myint",
+            "end TRP #0"
+        ]
+        memory,lines, slines, labels, error = vm.assemble(testString)
+        self.assertEqual(error, '')
+        memory,error = vm.emulate(memory, vm.registers)
+        self.assertEqual(error, '')
+        self.assertEqual(memory[3].getInt(), 1)
+
+    def test_ldr(self):
+        self.reset()
+        testString = [
+            "myint .INT #1",
+            "MAIN LDR r0 myint",
+            "end TRP #0"
+        ]
+        memory,lines, slines, labels, error = vm.assemble(testString)
+        self.assertEqual(error, '')
+        memory,error = vm.emulate(memory, vm.registers)
+        self.assertEqual(error, '')
+        self.assertEqual(vm.registers['R0'].getInt(), 0)
+
+    def test_istr(self):
+        self.reset()
+        testString = [
+            "WRITER .INT #24",
+            "MAIN LDA R2 WRITER",
+            "ADDI r1 R1 #1",
+            "ISTR R1 R2",
+            "TRP #0"
+        ]
+        memory,lines, slines, labels, error = vm.assemble(testString)
+        self.assertEqual(error, '')
+        memory,error = vm.emulate(memory, vm.registers)
+        self.assertEqual(error, '')
+        self.assertEqual(memory[0].getInt(), 0)
+        self.assertEqual(memory[1].getInt(), 0)
+        self.assertEqual(memory[2].getInt(), 0)
+        self.assertEqual(memory[3].getInt(), 1)
+
+    def test_ildr(self):
+        self.reset()
+        testString = [
+            "READER .INT #24",
+            "read .INT #14",
+            "MAIN LDA R2 read",
+            "ILDR R1 R2",
+            "TRP #0"
+        ]
+        memory,lines, slines, labels, error = vm.assemble(testString)
+        self.assertEqual(error, '')
+        memory,error = vm.emulate(memory, vm.registers)
+        self.assertEqual(error, '')
+        self.assertEqual(vm.registers['R1'].getInt(), 14)
+
+    def test_istb(self):
+        self.reset()
+        testString = [
+            "WRITER .BYT",
+            "MAIN LDA R2 WRITER",
+            "ADDI r1 R1 #-1",
+            "ISTB R1 R2",
+            "TRP #0"
+        ]
+        memory,lines, slines, labels, error = vm.assemble(testString)
+        self.assertEqual(error, '')
+        memory,error = vm.emulate(memory, vm.registers)
+        self.assertEqual(error, '')
+        self.assertEqual(memory[0].getInt(), -1)
+        self.assertEqual(memory[1].getInt(), 9)
+
+    def test_ildb(self):
+        self.reset()
+        testString = [
+            "READER .BYT",
+            "read .BYT #12",
+            "MAIN LDA R2 read",
+            "ILDB R1 R2",
+            "TRP #0"
+        ]
+        memory,lines, slines, labels, error = vm.assemble(testString)
+        self.assertEqual(error, '')
+        memory,error = vm.emulate(memory, vm.registers)
+        self.assertEqual(error, '')
+        self.assertEqual(vm.registers['R1'].getInt(), 12)
+
+    def test_add(self):
+        self.reset()
+        testString = [
+            "MAIN ADDI r0 r0 #1",
+            "ADD r4 r1 r0",
+            "TRP #0"
+        ]
+        memory,lines, slines, labels, error = vm.assemble(testString)
+        self.assertEqual(error, '')
+        memory,error = vm.emulate(memory, vm.registers)
+        self.assertEqual(error, '')
+        self.assertEqual(vm.registers['R4'].getInt(), 1)
+        self.assertEqual(vm.registers['R0'].getInt(), 1)
+        self.assertEqual(vm.registers['R1'].getInt(), 0)
+
+    def test_addi(self):
+        self.reset()
+        testString = [
+            "MAIN ADDI r1 r1 #1",
+            "ADDI r2 r1 #1",
+            "TRP #0"
+        ]
+        memory,lines, slines, labels, error = vm.assemble(testString)
+        self.assertEqual(error, '')
+        memory,error = vm.emulate(memory, vm.registers)
+        self.assertEqual(error, '')
+        self.assertEqual(vm.registers['R0'].getInt(), 0)
+        self.assertEqual(vm.registers['R1'].getInt(), 1)
+        self.assertEqual(vm.registers['R2'].getInt(), 2)
+
+    def test_sub(self):
+        self.reset()
+        testString = [
+            "MAIN ADDI r0 r0 #1",
+            "SUB r4 r1 r0",
+            "TRP #0"
+        ]
+        memory,lines, slines, labels, error = vm.assemble(testString)
+        self.assertEqual(error, '')
+        memory,error = vm.emulate(memory, vm.registers)
+        self.assertEqual(error, '')
+        self.assertEqual(vm.registers['R4'].getInt(), -1)
+
+    def test_subi(self):
+        self.reset()
+        testString = [
+            "MAIN ADDI r1 r1 #4",
+            "SUBI r2 r1 #1",
+            "TRP #0"
+        ]
+        memory,lines, slines, labels, error = vm.assemble(testString)
+        self.assertEqual(error, '')
+        memory,error = vm.emulate(memory, vm.registers)
+        self.assertEqual(error, '')
+        self.assertEqual(vm.registers['R0'].getInt(), 0)
+        self.assertEqual(vm.registers['R1'].getInt(), 4)
+        self.assertEqual(vm.registers['R2'].getInt(), 3)
+
+    def test_mul(self):
+        self.reset()
+        testString = [
+            "MAIN ADDI r0 r0 #1",
+            "MUL r4 r1 r0",
+            "TRP #0"
+        ]
+        memory,lines, slines, labels, error = vm.assemble(testString)
+        self.assertEqual(error, '')
+        memory,error = vm.emulate(memory, vm.registers)
+        self.assertEqual(error, '')
+        self.assertEqual(vm.registers['R4'].getInt(), 0)
+    
+    def test_muli(self):
+        self.reset()
+        testString = [
+            "MAIN ADDI r1 r1 #2",
+            "MULI r3 r1 #3",
+            "TRP #0"
+        ]
+        memory,lines, slines, labels, error = vm.assemble(testString)
+        self.assertEqual(error, '')
+        memory,error = vm.emulate(memory, vm.registers)
+        self.assertEqual(error, '')
+        self.assertEqual(vm.registers['R0'].getInt(), 0)
+        self.assertEqual(vm.registers['R1'].getInt(), 2)
+        self.assertEqual(vm.registers['R2'].getInt(), 0)
+        self.assertEqual(vm.registers['R3'].getInt(), 6)
+    
+    def test_div(self):
+        self.reset()
+        testString = [
+            "MAIN ADDI r1 r1 #2",
+            'addi r2 r2 #6',
+            "DIV r3 r2 r1",
+            "TRP #0"
+        ]
+        memory,lines, slines, labels, error = vm.assemble(testString)
+        self.assertEqual(error, '')
+        memory,error = vm.emulate(memory, vm.registers)
+        self.assertEqual(error, '')
+        self.assertEqual(vm.registers['R0'].getInt(), 0)
+        self.assertEqual(vm.registers['R1'].getInt(), 2)
+        self.assertEqual(vm.registers['R2'].getInt(), 6)
+        self.assertEqual(vm.registers['R3'].getInt(), 3)
+
+    def test_sdiv(self):
+        self.reset()
+        testString = [
+            "MAIN ADDI r1 r1 #2",
+            'addi r2 r2 #6',
+            "DIV r3 r2 r1",
+            "TRP #0"
+        ]
+        memory,lines, slines, labels, error = vm.assemble(testString)
+        self.assertEqual(error, '')
+        memory,error = vm.emulate(memory, vm.registers)
+        self.assertEqual(error, '')
+        self.assertEqual(vm.registers['R0'].getInt(), 0)
+        self.assertEqual(vm.registers['R1'].getInt(), 2)
+        self.assertEqual(vm.registers['R2'].getInt(), 6)
+        self.assertEqual(vm.registers['R3'].getInt(), 3)
+
+    def test_divi(self):
+        self.reset()
+        testString = [
+            "MAIN ADDI r1 r1 #6",
+            "DIVI r3 r1 #3",
+            "TRP #0"
+        ]
+        memory,lines, slines, labels, error = vm.assemble(testString)
+        self.assertEqual(error, '')
+        memory,error = vm.emulate(memory, vm.registers)
+        self.assertEqual(error, '')
+        self.assertEqual(vm.registers['R0'].getInt(), 0)
+        self.assertEqual(vm.registers['R1'].getInt(), 6)
+        self.assertEqual(vm.registers['R2'].getInt(), 0)
+        self.assertEqual(vm.registers['R3'].getInt(), 2)
+
+    def test_and(self):
+        self.reset()
+        testString = [
+            "MAIN ADDI r2 r2 #5",
+            "ADDI r1 r1 #21",
+            "AND r0 r2 r1",
+            "TRP #0"
+        ]
+        memory,lines, slines, labels, error = vm.assemble(testString)
+        self.assertEqual(error, '')
+        memory,error = vm.emulate(memory, vm.registers)
+        self.assertEqual(error, '')
+        self.assertEqual(vm.registers['R0'].getInt(), 5)
+        self.assertEqual(vm.registers['R1'].getInt(), 21)
+        self.assertEqual(vm.registers['R2'].getInt(), 5)
+        self.assertEqual(vm.registers['R3'].getInt(), 0)
+
+    def test_or(self):
+        self.reset()
+        testString = [
+            "MAIN ADDI r2 r2 #5",
+            "ADDI r1 r1 #2",
+            "OR r0 r2 r1",
+            "TRP #0"
+        ]
+        memory,lines, slines, labels, error = vm.assemble(testString)
+        self.assertEqual(error, '')
+        memory,error = vm.emulate(memory, vm.registers)
+        self.assertEqual(error, '')
+        self.assertEqual(vm.registers['R0'].getInt(), 7)
+        self.assertEqual(vm.registers['R1'].getInt(), 2)
+        self.assertEqual(vm.registers['R2'].getInt(), 5)
+        self.assertEqual(vm.registers['R3'].getInt(), 0)
+
+    def test_cmp(self):
+        self.reset()
+        testString = [
+            "MAIN ADDI r2 r2 #5",
+            "ADDI r1 r1 #2",
+            "CMP r0 r2 r1",
+            "TRP #0"
+        ]
+        memory,lines, slines, labels, error = vm.assemble(testString)
+        self.assertEqual(error, '')
+        memory,error = vm.emulate(memory, vm.registers)
+        self.assertEqual(error, '')
+        self.assertEqual(vm.registers['R0'].getInt(), 1)
+        self.assertEqual(vm.registers['R1'].getInt(), 2)
+        self.assertEqual(vm.registers['R2'].getInt(), 5)
+        self.assertEqual(vm.registers['R3'].getInt(), 0)
+        self.reset()
+        testString = [
+            "MAIN ADDI r2 r2 #2",
+            "ADDI r1 r1 #1",
+            "CMP r0 r1 r2",
+            "TRP #0"
+        ]
+        memory,lines, slines, labels, error = vm.assemble(testString)
+        self.assertEqual(error, '')
+        memory,error = vm.emulate(memory, vm.registers)
+        self.assertEqual(error, '')
+        self.assertEqual(vm.registers['R0'].getInt(), -1)
+        self.assertEqual(vm.registers['R1'].getInt(), 1)
+        self.assertEqual(vm.registers['R2'].getInt(), 2)
+        self.reset()
+        testString = [
+            "MAIN ADDI r2 r2 #2",
+            "ADDI r1 r1 #2",
+            "CMP r0 r1 r2",
+            "TRP #0"
+        ]
+        memory,lines, slines, labels, error = vm.assemble(testString)
+        self.assertEqual(error, '')
+        memory,error = vm.emulate(memory, vm.registers)
+        self.assertEqual(error, '')
+        self.assertEqual(vm.registers['R0'].getInt(), 0)
+        self.assertEqual(vm.registers['R1'].getInt(), 2)
+        self.assertEqual(vm.registers['R2'].getInt(), 2)
+
+    def test_cmpi(self):
+        self.reset()
+        testString = [
+            "MAIN MOVI R1 #1",
+            "CMPI R0 r1 #1",
+            "TRP #0"
+        ]
+        memory,lines, slines, labels, error = vm.assemble(testString)
+        self.assertEqual(error, '')
+        memory,error = vm.emulate(memory, vm.registers)
+        self.assertEqual(error, '')
+        self.assertEqual(vm.registers['R0'].getInt(), 0)
+        self.assertEqual(vm.registers['R1'].getInt(), 1)
+        self.assertEqual(vm.registers['R2'].getInt(), 0)
+        self.reset()
+        testString = [
+            "MAIN MOVI R1 #1",
+            "CMPI R0 r1 #2",
+            "TRP #0"
+        ]
+        memory,lines, slines, labels, error = vm.assemble(testString)
+        self.assertEqual(error, '')
+        memory,error = vm.emulate(memory, vm.registers)
+        self.assertEqual(error, '')
+        self.assertEqual(vm.registers['R0'].getInt(), -1)
+        self.assertEqual(vm.registers['R1'].getInt(), 1)
+        self.reset()
+        testString = [
+            "MAIN MOVI R1 #2",
+            "CMPI R0 r1 #1",
+            "TRP #0"
+        ]
+        memory,lines, slines, labels, error = vm.assemble(testString)
+        self.assertEqual(error, '')
+        memory,error = vm.emulate(memory, vm.registers)
+        self.assertEqual(error, '')
+        self.assertEqual(vm.registers['R0'].getInt(), 1)
+        self.assertEqual(vm.registers['R1'].getInt(), 2)
+
+    def test_alci(self):
+        self.reset()
+        testString = [
+            "MAIN ALCI R1 #3",
+            "TRP #0"
+        ]
+        memory,lines, slines, labels, error = vm.assemble(testString)
+        self.assertEqual(error, '')
+        memory,error = vm.emulate(memory, vm.registers)
+        self.assertEqual(error, '')
+        self.assertEqual(vm.registers['R1'].getInt(), vm.registers['sb'].getInt() + 1)
+        self.assertEqual(vm.registers['hp'].getInt(), vm.registers['sb'].getInt() + 4)
+        
+    def test_allc(self):
+        self.reset()
+        testString = [
+            "thing .INT #4",
+            "MAIN ALLC R1 thing",
+            "TRP #0"
+        ]
+        memory,lines, slines, labels, error = vm.assemble(testString)
+        self.assertEqual(error, '')
+        memory,error = vm.emulate(memory, vm.registers)
+        self.assertEqual(error, '')
+        self.assertEqual(vm.registers['R1'].getInt(), vm.registers['sb'].getInt() + 1)
+        self.assertEqual(vm.registers['hp'].getInt(), vm.registers['sb'].getInt() + 5)
+
+    def test_iallc(self):
+        self.reset()
+        testString = [
+            "thing .INT #4",
+            "MAIN LDA R1 thing",
+            "IALLC R0 R1",
+            "TRP #0"
+        ]
+        memory,lines, slines, labels, error = vm.assemble(testString)
+        self.assertEqual(error, '')
+        memory,error = vm.emulate(memory, vm.registers)
+        self.assertEqual(error, '')
+        self.assertEqual(vm.registers['R1'].getInt(), 0)
+        self.assertEqual(vm.registers['R0'].getInt(), vm.registers['sb'].getInt() + 1)
+        self.assertEqual(vm.registers['hp'].getInt(), vm.registers['sb'].getInt() + 5)
+
+    def test_pshr(self):
+        self.reset()
+        testString = [
+            "MAIN MOVI R1 #-1",
+            "PSHR R1",
+            "TRP #0"
+        ]
+        memory,lines, slines, labels, error = vm.assemble(testString)
+        self.assertEqual(error, '')
+        memory,error = vm.emulate(memory, vm.registers)
+        self.assertEqual(error, '')
+        self.assertEqual(vm.registers['R1'].getInt(), -1)
+        self.assertEqual(vm.registers['sp'].getInt(), vm.registers['sl'].getInt() + 4)
+        tVal,error = vm.readInt(memory, vm.registers['sp'].getInt()-4,error)
+        self.assertEqual(error, '')
+        self.assertEqual(tVal, -1)
+
+    def test_pshb(self):
+        self.reset()
+        testString = [
+            "MAIN MOVI R1 #4",
+            "PSHB R1",
+            "TRP #0"
+        ]
+        memory,lines, slines, labels, error = vm.assemble(testString)
+        self.assertEqual(error, '')
+        memory,error = vm.emulate(memory, vm.registers)
+        self.assertEqual(error, '')
+        self.assertEqual(vm.registers['R1'].getInt(), 4)
+        self.assertEqual(vm.registers['sp'].getInt(), vm.registers['sl'].getInt() + 1)
+        self.assertEqual(memory[vm.registers['sp'].getInt()-1].getInt(), 4)
+
+    def test_popr(self):
+        self.reset()
+        testString = [
+            "MAIN MOVI R1 #4",
+            "PSHR R1",
+            "POPR R2",
+            "TRP #0"
+        ]
+        memory,lines, slines, labels, error = vm.assemble(testString)
+        self.assertEqual(error, '')
+        memory,error = vm.emulate(memory, vm.registers)
+        self.assertEqual(error, '')
+        self.assertEqual(vm.registers['R2'].getInt(), 4)
+        self.assertEqual(vm.registers['sp'].getInt(), vm.registers['sl'].getInt())
+        self.reset()
+        testString = [
+            "MAIN MOVI R1 #4",
+            "PSHR R1",
+            "POPR R2",
+            "POPR R3",
+            "TRP #0"
+        ]
+        memory,lines, slines, labels, error = vm.assemble(testString)
+        self.assertEqual(error, '')
+        memory,error = vm.emulate(memory, vm.registers)
+        self.assertNotEqual(error, '')
+
+    def test_popb(self):
+        self.reset()
+        testString = [
+            "MAIN MOVI R1 #4",
+            "PSHB R1",
+            "POPB R2",
+            "TRP #0"
+        ]
+        memory,lines, slines, labels, error = vm.assemble(testString)
+        self.assertEqual(error, '')
+        memory,error = vm.emulate(memory, vm.registers)
+        self.assertEqual(error, '')
+        self.assertEqual(vm.registers['R2'].getInt(), 4)
+        self.assertEqual(vm.registers['sp'].getInt(), vm.registers['sl'].getInt())
+        self.reset()
+        testString = [
+            "MAIN MOVI R1 #4",
+            "PSHB R1",
+            "POPB R2",
+            "POPB R3",
+            "TRP #0"
+        ]
+        memory,lines, slines, labels, error = vm.assemble(testString)
+        self.assertEqual(error, '')
+        memory,error = vm.emulate(memory, vm.registers)
+        self.assertNotEqual(error, '')
+
+    def test_call(self):
+        self.reset()
+        testString = [
+            "thing .INT #4",
+            "MAIN CALL FUN",
+            "movi r0 #1",
+            "FUN ADDI r1 R1 #1",
+            "TRP #0"
+        ]
+        memory,lines, slines, labels, error = vm.assemble(testString)
+        self.assertEqual(error, '')
+        memory,error = vm.emulate(memory, vm.registers)
+        self.assertEqual(error, '')
+        self.assertEqual(vm.registers['R1'].getInt(), 1)
+        self.assertEqual(vm.registers['R0'].getInt(), 0)
+        retVal,error = vm.readInt(memory, vm.registers['sp'].getInt()-4,error)
+        self.assertEqual(error, '')
+        self.assertEqual(retVal, 4)
+
+    def test_ret(self):
+        self.reset()
+        testString = [
+            "thing .INT #4",
+            "FUN ADDI r1 R1 #1",
+            "RET",
+            "movi r0 #1",
+            "MAIN CALL FUN",
+            "TRP #0"
+        ]
+        memory,lines, slines, labels, error = vm.assemble(testString)
+        self.assertEqual(error, '')
+        memory,error = vm.emulate(memory, vm.registers)
+        self.assertEqual(error, '')
+        self.assertEqual(vm.registers['R1'].getInt(), 1)
+        self.assertEqual(vm.registers['R0'].getInt(), 0)
+        self.assertEqual(error, '')
+
 if __name__ == '__main__':
     t = TestEmulator()
-    # t.test_jmr()
+    # t.test_trp6()
     ml = [func for func in dir(TestEmulator) if callable(getattr(TestEmulator, func)) and func.startswith('test_')]
     for func in ml:
         eval(f't.{func}()')
